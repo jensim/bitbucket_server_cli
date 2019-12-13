@@ -10,6 +10,7 @@ use rayon::prelude::*;
 use crate::types::Opts;
 
 use super::types::Repo;
+use std::process::Child;
 
 struct State {
     progress: Option<Progress<'static>>,
@@ -20,13 +21,13 @@ struct State {
 }
 
 pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
-    repos.into_par_iter().for_each(|repo| clone_or_update(&opts.git_ssh_password, repo));
+    repos.into_par_iter().for_each(|repo| clone_or_update(&opts.git_ssh_password, &repo));
 }
 
-fn clone_or_update(ssh_pass: &Option<String>, repo: Repo) {
+fn clone_or_update(ssh_pass: &Option<String>, repo: &Repo) {
     if dir_exists(&repo) {
-        // update(&repo);
-        eprintln!("Repo exists already {}/{}", &repo.project_key, &repo.name);
+        update(&repo);
+
     } else {
         clone(ssh_pass, &repo)
     }
@@ -37,6 +38,32 @@ fn dir_exists(repo: &Repo) -> bool {
         Ok(_) => true,
         _ => false,
     };
+}
+
+fn update(repo: &Repo){
+    let s = format!("./{}/{}", repo.project_key.clone(), repo.name.clone());
+    let p = Path::new(s.trim());
+    let result: std::io::Result<Child> = std::process::Command::new("sh")
+        .arg("-C")
+        .arg(p)
+        .arg("git")
+        .arg("pull")
+        .spawn();
+    match result {
+        Ok (mut e) => {
+            match e.wait() {
+                Ok(_) => {
+                    println!("Repo updated {}/{}", &repo.project_key, &repo.name);
+                },
+                Err(_) => {
+                    eprintln!("Failed updating repo {}", s)
+                },
+            }
+        },
+        Err(e)  => {
+            eprintln!("Failed updating repo {}", s)
+        },
+    }
 }
 
 fn clone(ssh_pass: &Option<String>, repo: &Repo) {
