@@ -9,8 +9,8 @@ pub struct Opts {
     #[structopt(short = "s", long, name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
     pub bit_bucket_server: String,
 
-//    #[structopt(short = "p", long)]
-//    pub git_ssh_password: Option<String>,
+    #[structopt(short = "p", long)]
+    pub git_ssh_password: Option<String>,
 //    #[structopt(short = "u", long)]
 //    pub bit_bucket_username: Option<String>,
 //    #[structopt(short = "w", long)]

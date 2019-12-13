@@ -26,7 +26,7 @@ fn download_project(opts: Opts) {
     match fetch(&url[..]) {
         Ok(l) => {
             println!("{:?}", l);
-            git::git_going(l);
+            git::git_going(&opts, l);
         },
         Err(e) => {
             eprintln!("Failed loading repository list from bitbucket");
