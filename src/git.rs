@@ -1,5 +1,6 @@
 use generic_error::{GenericError, Result};
 use rayon::prelude::*;
+use std::result::Result as StdResult;
 
 use super::types::Repo;
 use std::cell::RefCell;
@@ -50,6 +51,7 @@ fn clone(repo: &Repo) {
         // print(&mut *state);
         true
     });
+    cb.credentials(git_credentials_callback);
 
     let mut co = CheckoutBuilder::new();
     co.progress(|path, cur, total| {
@@ -75,7 +77,25 @@ fn clone(repo: &Repo) {
             println!("Cloned {}/{}", &repo.project_key, &repo.name);
         }
         Err(e) => {
-            eprintln!("Failed cloning repo {}/{}", &repo.project_key, &repo.name);
+            eprintln!("Failed cloning repo {}/{} {:?}", &repo.project_key, &repo.name, e);
         }
+    }
+
+    fn git_credentials_callback(
+        _user: &str,
+        _user_from_url: Option<&str>,
+        _cred: git2::CredentialType,
+    ) -> StdResult<git2::Cred, git2::Error> {
+
+        let user = _user_from_url.unwrap_or("git");
+
+        if _cred.contains(git2::CredentialType::USERNAME) {
+            return git2::Cred::username(user);
+        }
+
+        let home = std::env::var("HOME").unwrap();
+        let private_key = format!("{}/.ssh/id_rsa", home);
+        let pub_key = format!("{}.pub", private_key);
+        git2::Cred::ssh_key(user, Some(Path::new(&pub_key)), Path::new(&private_key), None)
     }
 }
