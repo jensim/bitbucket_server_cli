@@ -7,10 +7,9 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-nonvolatile = "0.6.1"
 serde = {version = "1.0.103", features = ["derive"]}
-tokio = { version = "0.2.1", features = ["full"] }
 reqwest = "0.9.22"
 generic_error = "0.1.0"
 structopt = "0.3.5"
 rayon = "1.2.1"
+git2 = "0.11.0"

@@ -6,14 +6,15 @@ pub struct Opts {
     #[structopt(short = "k", long, name = "BitBucket Project key")]
     pub bit_bucket_project_key: String,
 
-    #[structopt(short = "p", long)]
-    pub git_ssh_password: Option<String>,
     #[structopt(short = "s", long, name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
     pub bit_bucket_server: String,
-    #[structopt(short = "u", long)]
-    pub bit_bucket_username: Option<String>,
-    #[structopt(short = "w", long)]
-    pub bit_bucket_password: Option<String>,
+
+//    #[structopt(short = "p", long)]
+//    pub git_ssh_password: Option<String>,
+//    #[structopt(short = "u", long)]
+//    pub bit_bucket_username: Option<String>,
+//    #[structopt(short = "w", long)]
+//    pub bit_bucket_password: Option<String>,
 }
 
 impl Opts {
