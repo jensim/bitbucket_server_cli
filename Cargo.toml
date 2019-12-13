@@ -13,3 +13,4 @@ tokio = { version = "0.2.1", features = ["full"] }
 reqwest = "0.9.22"
 generic_error = "0.1.0"
 structopt = "0.3.5"
+rayon = "1.2.1"

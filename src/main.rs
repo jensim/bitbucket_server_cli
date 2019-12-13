@@ -9,6 +9,7 @@ use reqwest::header::ACCEPT;
 use types::Opts;
 use types::Repo;
 use std::fs::ReadDir;
+use rayon::prelude::*;
 
 pub mod types;
 
@@ -25,12 +26,38 @@ fn download_project(opts: Opts) {
     match fetch(&url[..]) {
         Ok(l) => {
             println!("{:?}", l);
+            git_going(l);
         },
         Err(e) => {
             eprintln!("Failed loading repository list from bitbucket");
             std::process::exit(1);
         },
     }
+}
+
+fn git_going(repos:Vec<Repo>){
+    repos.into_par_iter().for_each(|repo| clone_or_update(repo));
+}
+
+fn clone_or_update(r:Repo) {
+    if dir_exists(&r.name){
+        update(r);
+    }else{
+        clone(r)
+    }
+}
+
+fn dir_exists(name: &String) -> bool {
+    // TODO
+    return false;
+}
+
+fn clone(r:Repo){
+    //TODO
+}
+
+fn update(r:Repo) {
+
 }
 
 fn fetch(url: &str) -> Result<Vec<Repo>> {
@@ -41,9 +68,3 @@ fn fetch(url: &str) -> Result<Vec<Repo>> {
         .json()?;
     return Ok(projects.get_clone_links());
 }
-
-fn print_help() {
-    println!("Help:");
-}
-
-
