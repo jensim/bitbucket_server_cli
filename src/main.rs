@@ -9,9 +9,9 @@ use reqwest::header::ACCEPT;
 use types::Opts;
 use types::Repo;
 use std::fs::ReadDir;
-use rayon::prelude::*;
 
-pub mod types;
+mod types;
+mod git;
 
 fn main() {
     let opt = Opts::from_args();
@@ -26,7 +26,7 @@ fn download_project(opts: Opts) {
     match fetch(&url[..]) {
         Ok(l) => {
             println!("{:?}", l);
-            git_going(l);
+            git::git_going(l);
         },
         Err(e) => {
             eprintln!("Failed loading repository list from bitbucket");
@@ -35,30 +35,6 @@ fn download_project(opts: Opts) {
     }
 }
 
-fn git_going(repos:Vec<Repo>){
-    repos.into_par_iter().for_each(|repo| clone_or_update(repo));
-}
-
-fn clone_or_update(r:Repo) {
-    if dir_exists(&r.name){
-        update(r);
-    }else{
-        clone(r)
-    }
-}
-
-fn dir_exists(name: &String) -> bool {
-    // TODO
-    return false;
-}
-
-fn clone(r:Repo){
-    //TODO
-}
-
-fn update(r:Repo) {
-
-}
 
 fn fetch(url: &str) -> Result<Vec<Repo>> {
     let client = reqwest::Client::new();
