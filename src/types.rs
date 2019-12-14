@@ -1,28 +1,31 @@
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "basic")]
+#[structopt(name = "BitBucket Server Cli")]
 pub struct Opts {
-    #[structopt(short = "k", long, name = "BitBucket Project key")]
-    pub bit_bucket_project_key: String,
 
-    #[structopt(short = "s", long, name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
+    #[structopt(short = "A", long = "bit_bucket_project_all", name = "Check out all projects")]
+    pub bit_bucket_project_all: bool,
+
+    #[structopt(short = "k", long, name = "BitBucket Project key")]
+    pub bit_bucket_project_key: Option<String>,
+
+    #[structopt(short = "s", long = "server", name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
     pub bit_bucket_server: String,
 
-    #[structopt(short = "p", long)]
+    #[structopt(short = "p", long, name = "SSH private key password to auth against BitBucket git repo")]
     pub git_ssh_password: Option<String>,
-//    #[structopt(short = "u", long)]
-//    pub bit_bucket_username: Option<String>,
-//    #[structopt(short = "w", long)]
-//    pub bit_bucket_password: Option<String>,
+    #[structopt(short = "u", long, name = "BitBucket user name")]
+    pub bit_bucket_username: Option<String>,
+    #[structopt(short = "w", long, name = "BitBucket password")]
+    pub bit_bucket_password: Option<String>,
+    #[structopt(short = "S", long, name = "Skip the checkout step")]
+    pub skip_checkout: bool,
 }
 
-impl Opts {
-    pub fn bit_bucket_url(&self) -> String {
-        let host = self.bit_bucket_server.to_string();
-        let key = self.bit_bucket_project_key.to_string();
-        return format!("{host}/rest/api/latest/projects/{key}/repos?limit=5000", host = host, key = key);
-    }
+#[derive(Deserialize, Debug)]
+pub struct AllProjects {
+    pub values: Vec<ProjDesc>,
 }
 
 #[derive(Deserialize, Debug)]
@@ -37,9 +40,9 @@ impl Projects {
             for clone_link in &value.links.clone {
                 if value.scm_id.trim() == "git" && clone_link.name.trim() == "ssh" {
                     links.push(Repo {
-                        project_key: value.project.key.clone(),
+                        project_key: value.project.key.to_lowercase(),
                         git: clone_link.href.clone(),
-                        name: value.slug.clone()
+                        name: value.slug.to_lowercase()
                     });
                 }
             }
