@@ -19,8 +19,6 @@ pub struct Opts {
     pub bit_bucket_username: Option<String>,
     #[structopt(short = "w", long, name = "BitBucket password")]
     pub bit_bucket_password: Option<String>,
-    #[structopt(short = "S", long, name = "Skip the checkout step")]
-    pub skip_checkout: bool,
 }
 
 #[derive(Deserialize, Debug)]
