@@ -38,7 +38,7 @@ impl Projects {
         let mut links: Vec<Repo> = Vec::new();
         for value in &self.values {
             for clone_link in &value.links.clone {
-                if value.scm_id.trim() == "git" && clone_link.name.trim() == "ssh" {
+                if value.state.trim() == "AVAILABLE" && value.scm_id.trim() == "git" && clone_link.name.trim() == "ssh" {
                     links.push(Repo {
                         project_key: value.project.key.to_lowercase(),
                         git: clone_link.href.clone(),
@@ -56,6 +56,7 @@ impl Projects {
 pub struct Project {
     pub slug: String,
     pub scm_id: String,
+    pub state: String,
     pub links: Links,
     pub project: ProjDesc,
 }
