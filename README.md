@@ -20,6 +20,7 @@ OPTIONS:
     -w, --bit-bucket-password <BitBucket password>
     -s, --server <BitBucket server base url, http://example.bitbucket.mycompany.com>
     -u, --bit-bucket-username <BitBucket user name>
+    -t, --thread-count <Number of system threads>                                            [default: 3]
     -p, --git-ssh-password <SSH private key password to auth against BitBucket git repo>
 ```
 
@@ -37,6 +38,3 @@ cargo run -- -S -k KEY -s https://example.server.com
 ```bash
 cargo install --path . --force
 ```
-
-### Caveats / TODOS
-- git update only supported by passing `sh -C $PATH git update` to the OS. 
