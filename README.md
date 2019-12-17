@@ -46,3 +46,7 @@ Update is not implemented, you'll need to do that with bash like this
 # Add it to your .bash_profile ?
 alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c "cd \"{}\"/../ && git reset --hard -q && git pull -q --ff-only &" \;'
 ```
+Remove the trailing & if you want the command to run in sync mode, its a lot slower though
+```bash
+alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c "cd \"{}\"/../ && git reset --hard -q && git pull -q --ff-only" \;'
+```
