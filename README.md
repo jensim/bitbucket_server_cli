@@ -38,3 +38,15 @@ cargo run -- -S -k KEY -s https://example.server.com
 ```bash
 cargo install --path . --force
 ```
+
+## Caveats
+Update is passed to os `sh -C $DIR git pull origin --ff-only -q`, and does not handle ssh-passphrase if you have one.
+Therefore, consider setting up your [git credentials cache](https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-credential-cache.html).
+
+```bash 
+> git config --global credential.helper store
+> git pull origin
+Password: 
+> git pull origin
+# No prompt, password is stored until an authentication failure is stumbled opon.
+```

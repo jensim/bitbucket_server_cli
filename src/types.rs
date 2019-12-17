@@ -21,6 +21,8 @@ pub struct Opts {
     pub bit_bucket_password: Option<String>,
     #[structopt(short = "t", long, name = "Number of system threads", default_value = "3")]
     pub thread_count: usize,
+    #[structopt(short = "R", long)]
+    pub skip_reset_on_state: bool,
 }
 
 #[derive(Deserialize, Debug)]
