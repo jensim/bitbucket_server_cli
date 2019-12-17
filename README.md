@@ -40,13 +40,9 @@ cargo install --path . --force
 ```
 
 ## Caveats
-Update is passed to os `sh -C $DIR git pull origin --ff-only -q`, and does not handle ssh-passphrase if you have one.
-Therefore, consider setting up your [git credentials cache](https://mirrors.edge.kernel.org/pub/software/scm/git/docs/git-credential-cache.html).
-
-```bash 
-> git config --global credential.helper store
-> git pull origin
-Password: 
-> git pull origin
-# No prompt, password is stored until an authentication failure is stumbled opon.
+Update is not implemented, you'll need to do that with bash like this
+```bash
+# Alias to make it a bit simpler to handle
+# Add it to your .bash_profile ?
+alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c "cd \"{}\"/../ && git reset --hard -q && git pull -q --ff-only &" \;'
 ```
