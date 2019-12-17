@@ -1,4 +1,4 @@
-use std::io::Result as IoResult;
+use std::io::{Write, Read};
 use std::path::Path;
 use std::process::{Child, Command};
 use std::result::Result as StdResult;
@@ -12,7 +12,7 @@ use crate::types::{Opts, Repo};
 
 pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
     println!("Started working {} repositories", repos.len());
-    println!("Progress: ... c=Clone u=Update");
+    println!("Progress: ... c=Clone _=Exists");
     let pool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
     let failed: Vec<String> = pool.install(|| {
         repos.into_par_iter().map(|repo| {
@@ -27,10 +27,7 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
                 git2::Cred::ssh_key(user, Some(Path::new(&pub_key)), Path::new(&private_key), pass)
             });
             match clone_or_update(opts.clone(), &repo, cb) {
-                Ok(result) => {
-                    print!("{}", result);
-                    None
-                }
+                Ok(result) => None,
                 Err(e) => Some(format!("{}/{} error:{}", repo.project_key, repo.name, e.msg)),
             }
         }).filter_map(|result: Option<String>| result).collect()
@@ -41,37 +38,31 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
         for fail in failed {
             eprintln!("{}", fail);
         }
+    }else {
+        println!();
     }
     println!("Done");
+    println!("To perform update try out this:");
+    println!("alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c \"cd \\\"{}\\\"/../ && git reset --hard -q && git pull -q --ff-only &\" \\;'", "{}");
 }
 
-fn clone_or_update(opts: &Opts, repo: &Repo, cb: RemoteCallbacks) -> Result<String> {
+fn clone_or_update(opts: &Opts, repo: &Repo, cb: RemoteCallbacks) -> Result<()> {
     let mut fo = FetchOptions::new();
     fo.remote_callbacks(cb);
 
     match dir_exists(&repo) {
         true => {
-            git_update(opts, &repo)?;
-            return Ok("c".to_string());
+            print!("_");
+            std::io::stdout().flush()?;
+            Ok(())
         }
         false => {
             git_clone(&repo, fo)?;
-            return Ok("u".to_string());
+            print!("c");
+            std::io::stdout().flush()?;
+            Ok(())
         }
     }
-}
-
-fn git_update(opts: &Opts, repo: &Repo) -> Result<()> {
-    let s = format!("./{}/{}", repo.project_key.clone(), repo.name.clone());
-
-    if !opts.skip_reset_on_state {
-        exec(&["-C", s.trim(), "git", "reset", "--hard"])?;
-        exec(&["-C", s.trim(), "git", "fetch", "-q", "origin"])?;
-        exec(&["-C", s.trim(), "git", "pull", "-q", "--ff-only"])?;
-    } else {
-        exec(&["-C", s.trim(), "git", "pull", "-q", "--ff-only"])?;
-    }
-    Ok(())
 }
 
 fn git_clone(repo: &Repo, fo: FetchOptions) -> Result<()> {
@@ -79,22 +70,6 @@ fn git_clone(repo: &Repo, fo: FetchOptions) -> Result<()> {
     let p = Path::new(s.trim());
     RepoBuilder::new().fetch_options(fo).clone(&repo.git, p)?;
     Ok(())
-}
-
-fn exec(args: &[&str]) -> Result<()> {
-    let mut command = Command::new("sh");
-    for arg in args {
-        command.arg(arg);
-    }
-    resolve_child_process(command.spawn())?;
-    Ok(())
-}
-
-fn resolve_child_process(process: IoResult<Child>) -> Result<()> {
-    match process?.wait()?.success() {
-        true => Ok(()),
-        false => Err(GenericError { msg: format!("Process had unsuccessful exit code") }),
-    }
 }
 
 fn dir_exists(repo: &Repo) -> bool {
