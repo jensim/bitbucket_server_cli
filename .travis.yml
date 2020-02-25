@@ -1,2 +1,8 @@
 language: rust
-rust: 1.39.0
+rust: 1.41.0
+before_script:
+  - cargo install --force cargo-audit
+  - cargo generate-lockfile
+script:
+  - cargo audit
+

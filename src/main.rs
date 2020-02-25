@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 extern crate reqwest;
 #[macro_use]
 extern crate serde;
