@@ -1,5 +1,6 @@
 language: rust
 rust: 1.41.0
+cache: cargo # cache cargo-audit once installed
 before_script:
   - cargo install --force cargo-audit
   - cargo generate-lockfile
