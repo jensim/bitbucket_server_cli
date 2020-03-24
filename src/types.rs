@@ -13,8 +13,6 @@ pub struct Opts {
     #[structopt(short = "s", long = "server", name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
     pub bit_bucket_server: String,
 
-    #[structopt(short = "p", long, name = "SSH private key password to auth against BitBucket git repo")]
-    pub git_ssh_password: Option<String>,
     #[structopt(short = "u", long, name = "BitBucket user name")]
     pub bit_bucket_username: Option<String>,
     #[structopt(short = "w", long, name = "BitBucket password")]
@@ -22,7 +20,7 @@ pub struct Opts {
     #[structopt(short = "t", long, name = "Number of system threads", default_value = "3")]
     pub thread_count: usize,
     #[structopt(short = "R", long)]
-    pub skip_reset_on_state: bool,
+    pub reset_state: bool,
 }
 
 #[derive(Deserialize, Debug)]

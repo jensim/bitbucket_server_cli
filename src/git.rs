@@ -1,5 +1,6 @@
-use std::io::{ Write};
+use std::io::Write;
 use std::path::Path;
+use std::process::{Command, Output};
 use std::result::Result as StdResult;
 
 use generic_error::Result;
@@ -21,11 +22,9 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
                 let home = std::env::var("HOME").unwrap();
                 let private_key = format!("{}/.ssh/id_rsa", home);
                 let pub_key = format!("{}.pub", private_key);
-                let ssh_pass = opts.git_ssh_password.clone();
-                let pass = ssh_pass.as_ref().map(|p| p.trim());
-                git2::Cred::ssh_key(user, Some(Path::new(&pub_key)), Path::new(&private_key), pass)
+                git2::Cred::ssh_key(user, Some(Path::new(&pub_key)), Path::new(&private_key), None)
             });
-            match clone_or_update(&repo, cb) {
+            match clone_or_update(&repo, &opts, cb) {
                 Ok(result) => {
                     print!("{}", result);
                     std::io::stdout().flush().unwrap_or(());
@@ -53,26 +52,62 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
     println!("alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c \"cd \\\"{}\\\"/../ && git reset --hard -q && git pull -q --ff-only &\" \\;'", "{}");
 }
 
-fn clone_or_update(repo: &Repo, cb: RemoteCallbacks) -> Result<String> {
+fn clone_or_update<'a>(repo: &'a Repo, opts: &Opts, cb: RemoteCallbacks) -> Result<&'a str> {
     let mut fo = FetchOptions::new();
     fo.remote_callbacks(cb);
 
     match dir_exists(&repo) {
         true => {
-            Ok("_".to_string())
+            if opts.reset_state {
+                // TODO reset state
+            }
+            Ok(git_update(&repo)?)
         }
         false => {
             git_clone(&repo, fo)?;
-            Ok("c".to_string())
+            Ok(&"c")
         }
     }
 }
 
 fn git_clone(repo: &Repo, fo: FetchOptions) -> Result<()> {
-    let s = format!("./{}/{}", repo.project_key.clone(), repo.name.clone());
-    let p = Path::new(s.trim());
-    RepoBuilder::new().fetch_options(fo).clone(&repo.git, p)?;
+    let s = path(&repo);
+    let path = Path::new(&s);
+    RepoBuilder::new().fetch_options(fo).clone(&repo.git, path)?;
     Ok(())
+}
+
+fn git_update(repo: &Repo) -> Result<&str> {
+    let out = exec("git pull --ff-only", &repo)?;
+    let success = out.status.success();
+    let output = format!("{:?}", std::str::from_utf8(out.stdout.as_slice()));
+    return if success {
+        if output.contains(&"Already up to date.") {
+            Ok("u")
+        } else {
+            Ok("U")
+        }
+    } else {
+        Ok("e")
+    }
+}
+
+fn exec(cmd: &str, repo: &Repo) -> Result<Output> {
+    let is_win: bool = cfg!(target_os = "windows");
+    let string_path = path(&repo);
+    let path = Path::new(&string_path);
+    return match is_win {
+        true => {
+            Ok(Command::new("cmd").args(&["/C", cmd]).current_dir(path).output()?)
+        },
+        false => {
+            Ok(Command::new("sh").args(&["-c", cmd]).current_dir(path).output()?)
+        }
+    };
+}
+
+fn path(repo: &Repo) -> String {
+    return format!("./{}/{}", repo.project_key.clone(), repo.name.clone());
 }
 
 fn dir_exists(repo: &Repo) -> bool {
