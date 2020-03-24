@@ -12,7 +12,7 @@ use crate::types::{Opts, Repo};
 
 pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
     println!("Started working {} repositories", repos.len());
-    println!("Progress: ... c=Clone _=Exists e=Err");
+    println!("Progress: ... c=Clone U=Updated, u=Already up to date, e=Err");
     let pool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
     let failed: Vec<String> = pool.install(|| {
         repos.into_par_iter().map(|repo| {
@@ -48,8 +48,6 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
         println!();
     }
     println!("Done");
-    println!("To perform update try out this:");
-    println!("alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c \"cd \\\"{}\\\"/../ && git reset --hard -q && git pull -q --ff-only &\" \\;'", "{}");
 }
 
 fn clone_or_update<'a>(repo: &'a Repo, opts: &Opts, cb: RemoteCallbacks) -> Result<&'a str> {
@@ -59,12 +57,13 @@ fn clone_or_update<'a>(repo: &'a Repo, opts: &Opts, cb: RemoteCallbacks) -> Resu
     match dir_exists(&repo) {
         true => {
             if opts.reset_state {
-                // TODO reset state
+                git_reset(repo)?;
             }
             Ok(git_update(&repo)?)
         }
         false => {
             git_clone(&repo, fo)?;
+            git_reset(repo)?;
             Ok(&"c")
         }
     }
@@ -90,6 +89,12 @@ fn git_update(repo: &Repo) -> Result<&str> {
     } else {
         Ok("e")
     }
+}
+
+fn git_reset(repo: &Repo) -> Result<()> {
+    exec("git reset --hard", repo)?;
+    exec("git checkout master --quiet --force --theirs", repo)?;
+    Ok(())
 }
 
 fn exec(cmd: &str, repo: &Repo) -> Result<Output> {
