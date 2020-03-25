@@ -13,17 +13,20 @@ USAGE:
     bitbucket_server_cli [FLAGS] [OPTIONS] --server <BitBucket server base url, http://example.bitbucket.mycompany.com>
 
 FLAGS:
-    -A, --bit_bucket_project_all
-    -h, --help                      Prints help information
-    -V, --version                   Prints version information
+    -W, --ask        Ask for password
+    -A, --all        All project keys
+    -V, --verbose    More verbose output
+    -R, --reset      Reset repos before pulling/after cloning
+    -h, --help       Prints help information
+        --version    Prints version information
 
 OPTIONS:
-    -k, --bit-bucket-project-key <BitBucket Project key>
-    -w, --bit-bucket-password <BitBucket password>
-    -s, --server <BitBucket server base url, http://example.bitbucket.mycompany.com>
-    -u, --bit-bucket-username <BitBucket user name>
-    -t, --thread-count <Number of system threads>                                            [default: 3]
-    -p, --git-ssh-password <SSH private key password to auth against BitBucket git repo>
+    -k, --key <BitBucket Project key>                                                   
+    -w, --password <BitBucket password>                                                 
+    -s, --server <BitBucket server base url, http://example.bitbucket.mycompany.com>    
+    -u, --username <BitBucket user name>                                                
+    -t, --threads <Number of system threads>                                             [default: 3]
+
 ```
 
 ## run from source
@@ -39,16 +42,10 @@ cargo run -- -S -k KEY -s https://example.server.com
 ## install to run locally
 ```bash
 cargo install --path . --force
+bitbucket_server_cli -A -s https://example.server.com
 ```
 
 ## Caveats
-Update is not implemented, you'll need to do that with bash like this
-```bash
-# Alias to make it a bit simpler to handle
-# Add it to your .bash_profile ?
-alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c "cd \"{}\"/../ && git reset --hard -q && git pull -q --ff-only &" \;'
-```
-Remove the trailing & if you want the command to run in sync mode, its a lot slower though
-```bash
-alias git-pull-recursive='find . -maxdepth 3 -mindepth 2 -type d -name .git -exec sh -c "cd \"{}\"/../ && git reset --hard -q && git pull -q --ff-only" \;'
-```
+- Update is currently implemented by delegating to sh git
+- git auth expects the current shell user to have a valid id_rsa file in `$HOME/.ssh/`
+- 
