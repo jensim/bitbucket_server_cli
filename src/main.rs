@@ -13,9 +13,13 @@ use reqwest::RequestBuilder;
 
 mod types;
 mod git;
+mod input;
 
 fn main() {
-    let opt = Opts::from_args();
+    let mut opt: Opts = Opts::from_args();
+    if opt.ask_for_password {
+        opt.bit_bucket_password = input::get_password();
+    }
     download_project(opt);
 }
 

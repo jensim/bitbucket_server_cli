@@ -21,9 +21,9 @@ pub struct Opts {
     pub thread_count: usize,
     #[structopt(short = "R", long = "reset", name = "Reset repos before updating, and switch to master branch")]
     pub reset_state: bool,
-    #[structopt(short = "W", long = "ask", name = "Ask for password")]
-    pub verbose: bool,
     #[structopt(short = "V", long = "verbose", name = "More verbose output")]
+    pub verbose: bool,
+    #[structopt(short = "W", long = "ask", name = "Ask for password")]
     pub ask_for_password: bool,
 }
 
