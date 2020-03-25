@@ -1,4 +1,3 @@
-use std::io::Write;
 use std::path::Path;
 use std::process::{Command, Output};
 use std::result::Result as StdResult;
@@ -9,11 +8,13 @@ use git2::build::RepoBuilder;
 use rayon::prelude::*;
 
 use crate::types::{Opts, Repo};
+use rayon::ThreadPool;
+use std::io::Write;
 
 pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
     println!("Started working {} repositories", repos.len());
     println!("Progress: ... c=Clone U=Updated, u=Already up to date, e=Err");
-    let pool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
+    let pool: ThreadPool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
     let failed: Vec<String> = pool.install(|| {
         repos.into_par_iter().map(|repo| {
             let mut cb = RemoteCallbacks::new();
@@ -41,8 +42,10 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
 
     if !failed.is_empty() {
         eprintln!("\n{} projects failed to update or clone.", failed.len());
-        for fail in failed {
-            eprintln!("{}", fail);
+        if opts.verbose {
+            for fail in failed {
+                eprintln!("{}", fail);
+            }
         }
     } else {
         println!();
