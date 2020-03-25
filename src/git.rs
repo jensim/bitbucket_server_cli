@@ -9,11 +9,11 @@ use rayon::prelude::*;
 
 use crate::types::{Opts, Repo};
 use rayon::ThreadPool;
-use std::io::Write;
+use indicatif::ProgressBar;
 
 pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
     println!("Started working {} repositories", repos.len());
-    println!("Progress: ... c=Clone U=Updated, u=Already up to date, e=Err");
+    let bar: ProgressBar = ProgressBar::new(repos.len() as u64);
     let pool: ThreadPool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
     let failed: Vec<String> = pool.install(|| {
         repos.into_par_iter().map(|repo| {
@@ -25,20 +25,14 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
                 let pub_key = format!("{}.pub", private_key);
                 git2::Cred::ssh_key(user, Some(Path::new(&pub_key)), Path::new(&private_key), None)
             });
+            bar.inc(1);
             match clone_or_update(&repo, &opts, cb) {
-                Ok(result) => {
-                    print!("{}", result);
-                    std::io::stdout().flush().unwrap_or(());
-                    None
-                }
-                Err(e) => {
-                    print!("e");
-                    std::io::stdout().flush().unwrap_or(());
-                    Some(format!("{}/{} error:{}", repo.project_key, repo.name, e.msg))
-                }
+                Ok(_result) => None,
+                Err(e) => Some(format!("{}/{} error:{}", repo.project_key, repo.name, e.msg))
             }
         }).filter_map(|result: Option<String>| result).collect()
     });
+    bar.finish();
 
     if !failed.is_empty() {
         eprintln!("\n{} projects failed to update or clone.", failed.len());
@@ -47,10 +41,7 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
                 eprintln!("{}", fail);
             }
         }
-    } else {
-        println!();
     }
-    println!("Done");
 }
 
 fn clone_or_update<'a>(repo: &'a Repo, opts: &Opts, cb: RemoteCallbacks) -> Result<&'a str> {
