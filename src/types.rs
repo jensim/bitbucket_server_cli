@@ -1,30 +1,14 @@
-use structopt::StructOpt;
-
-#[derive(StructOpt, Debug)]
-#[structopt(name = "BitBucket Server Cli")]
+#[derive(Debug)]
 pub struct Opts {
 
-    #[structopt(short = "A", long = "all", name = "Check out all projects")]
     pub bit_bucket_project_all: bool,
-
-    #[structopt(short = "k", long = "key", name = "BitBucket Project key")]
     pub bit_bucket_project_key: Option<String>,
-
-    #[structopt(short = "s", long = "server", name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
     pub bit_bucket_server: String,
-
-    #[structopt(short = "u", long = "username", name = "BitBucket user name")]
-    pub bit_bucket_username: Option<String>,
-    #[structopt(short = "w", long = "password", name = "BitBucket password")]
+    pub bit_bucket_username: String,
     pub bit_bucket_password: Option<String>,
-    #[structopt(short = "t", long = "threads", name = "Number of system threads", default_value = "3")]
     pub thread_count: usize,
-    #[structopt(short = "R", long = "reset", name = "Reset repos before updating, and switch to master branch")]
     pub reset_state: bool,
-    #[structopt(short = "V", long = "verbose", name = "More verbose output")]
     pub verbose: bool,
-    #[structopt(short = "W", long = "ask", name = "Ask for password")]
-    pub ask_for_password: bool,
 }
 
 #[derive(Deserialize, Debug)]

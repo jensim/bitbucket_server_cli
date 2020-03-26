@@ -5,7 +5,6 @@ extern crate serde;
 
 use generic_error::Result;
 use reqwest::header::ACCEPT;
-use structopt::StructOpt;
 
 use types::Opts;
 use types::Repo;
@@ -14,16 +13,14 @@ use reqwest::RequestBuilder;
 mod types;
 mod git;
 mod input;
+mod prompts;
 
 fn main() {
-    let mut opt: Opts = Opts::from_args();
-    if opt.ask_for_password {
-        opt.bit_bucket_password = input::get_password();
-    }
-    download_project(opt);
+    let opts: Opts = input::opts();
+    download_project(&opts);
 }
 
-fn download_project(opts: Opts) {
+fn download_project(opts: &Opts) {
     let repos:Result<Vec<Repo>>;
     match opts.bit_bucket_project_all {
         true => {
@@ -78,8 +75,8 @@ fn bake_client(url: String, opts: &Opts) -> RequestBuilder {
     let client = reqwest::Client::new();
     let mut builder = client.get(url.trim());
     builder = builder.header(ACCEPT, "application/json");
-    return match (opts.bit_bucket_username.as_ref(), opts.bit_bucket_password.as_ref()) {
-        (Some(u), Some(p)) => builder.basic_auth(u.clone(), Some(p.clone())),
+    return match (&opts.bit_bucket_username, opts.bit_bucket_password.as_ref()) {
+        (u, Some(p)) => builder.basic_auth(u.clone(), Some(p.clone())),
         _ => builder,
     }
 }
