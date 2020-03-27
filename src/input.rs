@@ -4,7 +4,16 @@ use std::str::FromStr;
 use dialoguer::{Confirmation, Input, PasswordInput, theme::ColorfulTheme};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
-use crate::prompts::{Prompt, PROMPT_BB_PASSWORD, PROMPT_BB_PROJECT_ALL, PROMPT_BB_PROJECT_ONE, PROMPT_BB_SERVER, PROMPT_BB_USERNAME, PROMPT_RESET_STATE, PROMPT_THREAD_COUNT, PROMPT_VERBOSE};
+use crate::prompts::{
+    Prompt,
+    PROMPT_BB_PASSWORD,
+    PROMPT_BB_PROJECT_ALL,
+    PROMPT_BB_PROJECT_ONE,
+    PROMPT_BB_SERVER,
+    PROMPT_BB_USERNAME,
+    PROMPT_RESET_STATE,
+    PROMPT_THREAD_COUNT,
+    PROMPT_VERBOSE};
 use crate::types::Opts;
 
 const PROP_FILE:&str = ".bitbucket_server_cli.db";
@@ -88,8 +97,10 @@ fn get_with_default(prompt: &Prompt, default: Option<String>) -> String {
     let mut ask: Option<String> = None;
     while ask.is_none() || ask.clone().unwrap().trim().is_empty() {
         match read_val.clone() {
-            Some(s) => ask = resolve(Input::new().with_prompt(prompt.prompt_str).allow_empty(false).default(s).show_default(true).interact()),
-            None => ask = resolve(Input::new().with_prompt(prompt.prompt_str).allow_empty(true).show_default(false).interact())
+            Some(s) => ask = resolve(Input::new().with_prompt(prompt.prompt_str)
+                .allow_empty(false).default(s).show_default(true).interact()),
+            None => ask = resolve(Input::new().with_prompt(prompt.prompt_str)
+                .allow_empty(true).show_default(false).interact())
         }
     }
     let answer = ask.unwrap();
@@ -115,8 +126,9 @@ fn resolve(result: StdResult<String, std::io::Error>) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs::remove_file;
+
+    use super::*;
 
     #[test]
     fn test_db() {
