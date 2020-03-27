@@ -50,20 +50,16 @@ fn get_password(prompt: &Prompt) -> Option<String> {
 fn get_bool(prompt: &Prompt, default: bool) -> bool {
     let mut db = get_db();
     let read_val: bool = db.get(prompt.db_key).unwrap_or(default);
-    let prompt_str = format!("{} ({})", prompt.prompt_str, read_val);
     let prompt_val = Confirmation::new()
-        .with_text(&prompt_str)
+        .with_text(prompt.prompt_str)
         .default(read_val)
+        .show_default(true)
         .interact().unwrap_or(default);
     match db.set(prompt.db_key, &prompt_val) {
         Err(_) => eprintln!("Failed writing value to prickle db"),
         _ => {},
     };
     prompt_val
-}
-
-fn get_input(prompt_str: &str) -> Option<String> {
-    resolve(Input::new().with_prompt(prompt_str).allow_empty(true).interact())
 }
 
 fn get_valid_type<T>(prompt: &Prompt, default: Option<String>) -> T
@@ -89,14 +85,12 @@ fn get_valid_type<T>(prompt: &Prompt, default: Option<String>) -> T
 fn get_with_default(prompt: &Prompt, default: Option<String>) -> String {
     let mut db = get_db();
     let read_val: Option<String> = db.get(prompt.db_key).or(default);
-    let prompt_str = match read_val.clone() {
-        Some(s) => format!("{} ({})", &prompt.prompt_str, s),
-        None => prompt.prompt_str.to_owned()
-    };
-
     let mut ask: Option<String> = None;
     while ask.is_none() || ask.clone().unwrap().trim().is_empty() {
-        ask = get_input(&prompt_str).or(read_val.clone());
+        match read_val.clone() {
+            Some(s) => ask = resolve(Input::new().with_prompt(prompt.prompt_str).allow_empty(false).default(s).show_default(true).interact()),
+            None => ask = resolve(Input::new().with_prompt(prompt.prompt_str).allow_empty(true).show_default(false).interact())
+        }
     }
     let answer = ask.unwrap();
     match db.set(prompt.db_key, &answer) {

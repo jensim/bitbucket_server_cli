@@ -9,6 +9,7 @@ use reqwest::header::ACCEPT;
 use types::Opts;
 use types::Repo;
 use reqwest::RequestBuilder;
+use std::time::Instant;
 
 mod types;
 mod git;
@@ -17,7 +18,13 @@ mod prompts;
 
 fn main() {
     let opts: Opts = input::opts();
+    let start_time = Instant::now();
+
     download_project(&opts);
+
+    if opts.verbose {
+        println!("Done in {:?}", start_time.elapsed());
+    }
 }
 
 fn download_project(opts: &Opts) {
