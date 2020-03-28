@@ -1,3 +1,9 @@
 language: rust
 rust: 1.41.0
 cache: cargo
+
+deploy:
+  provider: script
+  script: cargo install cargo-bump && cargo-bump $TRAVIS_TAG && cargo login $CRATES_TOKEN && cargo publish
+  on:
+    tags: true
