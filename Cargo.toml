@@ -1,6 +1,6 @@
 [package]
 name = "bitbucket_server_cli"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Jens Brimfors <jens.brimfors@gmail.se>"]
 edition = "2018"
 license = "MIT"
@@ -22,7 +22,6 @@ reqwest = "0.9"
 generic_error = "0.1"
 rayon = "1.2"
 git2 = "0.11"
-rpassword = "4.0"
 indicatif = "0.14"
 pickledb = "0.4"
 dialoguer = "0.5"
