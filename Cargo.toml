@@ -3,14 +3,22 @@ name = "bitbucket_server_cli"
 version = "0.1.0"
 authors = ["Jens Brimfors <jens.brimfors@gmail.se>"]
 edition = "2018"
+license = "MIT"
+readme = "README.md"
+description = "A CLI for cloning and updating entire projects from bitbucket server"
+repository = "https://github.com/jensim/bitbucket_server_cli/"
+homepage = "https://github.com/jensim/bitbucket_server_cli/"
+documentation = "https://github.com/jensim/bitbucket_server_cli/blob/master/README.md"
+keywords = ["cli", "bitbucket", "git", "clone"]
+categories = ["command-line-utilities", "development-tools"]
 
 [dependencies]
-serde = {version = "1.0.103", features = ["derive"]}
-reqwest = "0.9.22"
-generic_error = "0.1.0"
-rayon = "1.2.1"
-git2 = "0.11.0"
-rpassword = "4.0.5"
-indicatif = "0.14.0"
-pickledb = "0.4.0"
-dialoguer = "0.5.0"
+serde = {version = "1.0", features = ["derive"]}
+reqwest = "0.9"
+generic_error = "0.1"
+rayon = "1.2"
+git2 = "0.11"
+rpassword = "4.0"
+indicatif = "0.14"
+pickledb = "0.4"
+dialoguer = "0.5"
