@@ -15,14 +15,13 @@ cargo install bitbucket_server_cli
 BitBucket server address: https://example.com
 BitBucket username: user
 BitBucket password: [hidden]
-Clone/update all found projects with repos no
-Clone/update single project key: pjr
+Clone/update all found projects with repos yes
 Thread count: 3
 Reset state no
 Verbose output yes
-Started working 17 repositories
-█████████████████████████████████████████████████████████████████████████ 17/17
-Done in 1.342748499s
+Started working 1337 repositories
+[00:01:41] [########################################] 1337/1337 (eta:0s)
+Done in 1 minute
 ➜  bitbucket_server_cli git:(master) ✗ 
 ```
 

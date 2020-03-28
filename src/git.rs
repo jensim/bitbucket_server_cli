@@ -5,15 +5,18 @@ use std::result::Result as StdResult;
 use generic_error::Result;
 use git2::{FetchOptions, RemoteCallbacks};
 use git2::build::RepoBuilder;
+use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
+use rayon::ThreadPool;
 
 use crate::types::{Opts, Repo};
-use rayon::ThreadPool;
-use indicatif::ProgressBar;
 
 pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
     println!("Started working {} repositories", repos.len());
     let bar: ProgressBar = ProgressBar::new(repos.len() as u64);
+    bar.set_style(ProgressStyle::default_bar()
+        .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})")
+        .progress_chars("#>-"));
     let pool: ThreadPool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
     let failed: Vec<String> = pool.install(|| {
         repos.into_par_iter().map(|repo| {
@@ -25,11 +28,12 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
                 let pub_key = format!("{}.pub", private_key);
                 git2::Cred::ssh_key(user, Some(Path::new(&pub_key)), Path::new(&private_key), None)
             });
-            bar.inc(1);
-            match clone_or_update(&repo, &opts, cb) {
+            let result = match clone_or_update(&repo, &opts, cb) {
                 Ok(_result) => None,
                 Err(e) => Some(format!("{}/{} error:{}", repo.project_key, repo.name, e.msg))
-            }
+            };
+            bar.inc(1);
+            result
         }).filter_map(|result: Option<String>| result).collect()
     });
     bar.finish();

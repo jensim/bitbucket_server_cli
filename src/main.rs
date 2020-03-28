@@ -3,13 +3,15 @@ extern crate reqwest;
 #[macro_use]
 extern crate serde;
 
+use std::time::Instant;
+
 use generic_error::Result;
+use indicatif::HumanDuration;
 use reqwest::header::ACCEPT;
+use reqwest::RequestBuilder;
 
 use types::Opts;
 use types::Repo;
-use reqwest::RequestBuilder;
-use std::time::Instant;
 
 mod types;
 mod git;
@@ -23,7 +25,7 @@ fn main() {
     download_project(&opts);
 
     if opts.verbose {
-        println!("Done in {:?}", start_time.elapsed());
+        println!("Done in {}", HumanDuration(start_time.elapsed()));
     }
 }
 
