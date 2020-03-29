@@ -6,6 +6,7 @@ BitBucket Server Cli
 ![Crates.io](https://img.shields.io/crates/l/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/v/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)
+![Maintenance](https://img.shields.io/badge/maintenance-experimental-blue.svg)
 
 ## Install
 ```sh
