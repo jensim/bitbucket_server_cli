@@ -51,9 +51,15 @@ pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
             project_keys.push(r.project_key.clone());
         }
     }
+    let mut db = get_db();
+    let previous: Vec<String> = db.get(PROMPT_BB_PROJECT_SOME.db_key).unwrap_or(Vec::new());
+    let pre_selected: Vec<bool> = project_keys.iter().map(|key| previous.contains(key)).collect();
     let mut answer: Vec<usize> = Vec::new();
     while answer.is_empty() {
-        answer = Checkboxes::new().items(&project_keys).with_prompt(&PROMPT_BB_PROJECT_SOME.prompt_str).interact().unwrap_or_else(|_e| {
+        answer = Checkboxes::new().items(&project_keys)
+            .with_prompt(&PROMPT_BB_PROJECT_SOME.prompt_str)
+            .defaults(&pre_selected[..])
+            .interact().unwrap_or_else(|_e| {
             eprintln!("Failed handling project key selection");
             std::process::exit(1);
         });
@@ -62,6 +68,10 @@ pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
     for i in answer {
         filtered.push(project_keys[i].clone());
     }
+    match db.set(PROMPT_BB_PROJECT_SOME.db_key, &filtered) {
+        Err(_) => eprintln!("Failed writing value to prickle db"),
+        _ => {}
+    };
     filtered
 }
 
