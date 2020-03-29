@@ -40,10 +40,8 @@ pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
 
     if !failed.is_empty() {
         eprintln!("\n{} projects failed to update or clone.", failed.len());
-        if opts.verbose {
-            for fail in failed {
-                eprintln!("{}", fail);
-            }
+        for fail in failed {
+            eprintln!("{}", fail);
         }
     }
 }

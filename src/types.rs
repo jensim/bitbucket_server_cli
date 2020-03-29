@@ -5,21 +5,20 @@ use structopt::StructOpt;
 pub struct Opts {
     #[structopt(short = "A", long = "all", name = "Check out all projects")]
     pub bit_bucket_project_all: bool,
-
-    #[structopt(short = "k", long = "key", name = "BitBucket Project key")]
-    pub bit_bucket_project_key: Option<String>,
-
+    #[structopt(short = "k", long = "key", name = "BitBucket Project keys")]
+    pub bit_bucket_project_keys: Vec<String>,
     #[structopt(short = "s", long = "server", name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
-    pub bit_bucket_server: String,
-    pub bit_bucket_username: String,
+    pub bit_bucket_server: Option<String>,
+    #[structopt(short = "u", long = "username", name = "BitBucket username", )]
+    pub bit_bucket_username: Option<String>,
     #[structopt(short = "w", long = "password", name = "BitBucket password")]
     pub bit_bucket_password: Option<String>,
-    #[structopt(short = "t", long = "threads", name = "Number of system threads", default_value = "3")]
+    #[structopt(short = "T", long = "threads", name = "Number of system threads", default_value = "3")]
     pub thread_count: usize,
     #[structopt(short = "R", long = "reset", name = "Reset repos before updating, and switch to master branch")]
     pub reset_state: bool,
-    #[structopt(short = "V", long = "verbose", name = "More verbose output")]
-    pub verbose: bool,
+    #[structopt(short = "I", long = "interactive", name = "Run terminal in interactive mode, asking for required params like password user, host etc")]
+    pub interactive: bool,
 }
 
 #[derive(Deserialize, Debug)]

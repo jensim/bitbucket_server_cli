@@ -1,46 +1,68 @@
 use std::result::Result as StdResult;
-use std::str::FromStr;
 
-use dialoguer::{Confirmation, Input, PasswordInput, theme::ColorfulTheme};
+use dialoguer::{Checkboxes, Confirmation, Input, PasswordInput, theme::ColorfulTheme};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
 use crate::prompts::{
     Prompt,
     PROMPT_BB_PASSWORD,
     PROMPT_BB_PROJECT_ALL,
-    PROMPT_BB_PROJECT_ONE,
+    PROMPT_BB_PROJECT_SOME,
     PROMPT_BB_SERVER,
-    PROMPT_BB_USERNAME,
-    PROMPT_RESET_STATE,
-    PROMPT_THREAD_COUNT,
-    PROMPT_VERBOSE};
-use crate::types::Opts;
+    PROMPT_BB_USERNAME};
+use crate::types::{Opts, Repo};
 
-const PROP_FILE:&str = ".bitbucket_server_cli.db";
+const PROP_FILE: &str = ".bitbucket_server_cli.db";
 
-pub fn opts() -> Opts {
-    let bit_bucket_server: String = get_with_default(&PROMPT_BB_SERVER, None);
-    let bit_bucket_username: String = get_with_default(&PROMPT_BB_USERNAME, None);
-    let bit_bucket_password: Option<String> = get_password(&PROMPT_BB_PASSWORD);
-    let bit_bucket_project_all: bool = get_bool(&PROMPT_BB_PROJECT_ALL, true);
-    let bit_bucket_project_key: Option<String> = match bit_bucket_project_all {
-        true => None,
-        false => Some(get_with_default(&PROMPT_BB_PROJECT_ONE, None))
+pub fn opts(opts: &Opts) -> Opts {
+    let bit_bucket_server: Option<String> = match opts.bit_bucket_server.clone() {
+        None => get_with_default(&PROMPT_BB_SERVER, None, false),
+        Some(s) => Some(s)
     };
-    let thread_count: usize = get_valid_type(&PROMPT_THREAD_COUNT, Some("3".to_owned()));
-    let reset_state: bool = get_bool(&PROMPT_RESET_STATE, false);
-    let verbose: bool = get_bool(&PROMPT_VERBOSE, false);
+    let bit_bucket_username: Option<String> = match opts.bit_bucket_username.clone() {
+        None => get_with_default(&PROMPT_BB_USERNAME, None, true),
+        Some(s) => Some(s)
+    };
+    let bit_bucket_password: Option<String> = match bit_bucket_username {
+        None => None,
+        Some(_) => match opts.bit_bucket_password.clone() {
+            None => get_password(&PROMPT_BB_PASSWORD),
+            Some(s) => Some(s)
+        }
+    };
+    let bit_bucket_project_all: bool = opts.bit_bucket_project_all || get_bool(&PROMPT_BB_PROJECT_ALL, false);
 
     Opts {
         bit_bucket_project_all,
-        bit_bucket_project_key,
         bit_bucket_server,
         bit_bucket_username,
         bit_bucket_password,
-        thread_count,
-        reset_state,
-        verbose,
+        reset_state: opts.reset_state,
+        thread_count: opts.thread_count,
+        interactive: opts.interactive,
+        bit_bucket_project_keys: opts.bit_bucket_project_keys.clone(),
     }
+}
+
+pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
+    let mut project_keys: Vec<String> = Vec::new();
+    for r in repos {
+        if !project_keys.contains(&r.project_key) {
+            project_keys.push(r.project_key.clone());
+        }
+    }
+    let mut answer: Vec<usize> = Vec::new();
+    while answer.is_empty() {
+        answer = Checkboxes::new().items(&project_keys).with_prompt(&PROMPT_BB_PROJECT_SOME.prompt_str).interact().unwrap_or_else(|_e| {
+            eprintln!("Failed handling project key selection");
+            std::process::exit(1);
+        });
+    }
+    let mut filtered: Vec<String> = Vec::new();
+    for i in answer {
+        filtered.push(project_keys[i].clone());
+    }
+    filtered
 }
 
 fn get_db() -> PickleDb {
@@ -71,44 +93,25 @@ fn get_bool(prompt: &Prompt, default: bool) -> bool {
     prompt_val
 }
 
-fn get_valid_type<T>(prompt: &Prompt, default: Option<String>) -> T
-    where
-        T: serde::Serialize,
-        T: FromStr,
-        <T as std::str::FromStr>::Err: std::fmt::Debug,
-{
-    let until = 5;
-    for _i in 1..until {
-        let s: String = get_with_default(prompt, default.clone());
-        let r: std::result::Result<T, <T as std::str::FromStr>::Err> = s.parse::<T>();
-        if r.is_err() {
-            continue;
-        } else {
-            return r.unwrap();
-        }
-    }
-    eprintln!("Failed to read value after {} attempts.", until);
-    std::process::exit(1);
-}
-
-fn get_with_default(prompt: &Prompt, default: Option<String>) -> String {
+fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool) -> Option<String> {
     let mut db = get_db();
     let read_val: Option<String> = db.get(prompt.db_key).or(default);
-    let mut ask: Option<String> = None;
-    while ask.is_none() || ask.clone().unwrap().trim().is_empty() {
-        match read_val.clone() {
-            Some(s) => ask = resolve(Input::new().with_prompt(prompt.prompt_str)
-                .allow_empty(false).default(s).show_default(true).interact()),
-            None => ask = resolve(Input::new().with_prompt(prompt.prompt_str)
-                .allow_empty(true).show_default(false).interact())
-        }
-    }
-    let answer = ask.unwrap();
-    match db.set(prompt.db_key, &answer) {
-        Err(_) => eprintln!("Failed writing value to prickle db"),
-        _ => {},
+    let ask: Option<String> = match read_val.clone() {
+        Some(s) => resolve(Input::new().with_prompt(prompt.prompt_str)
+            .allow_empty(allow_empty).default(s).show_default(true).interact()),
+        None => resolve(Input::new().with_prompt(prompt.prompt_str)
+            .allow_empty(allow_empty).show_default(false).interact())
     };
-    answer
+    match ask {
+        Some(answer) => {
+            match db.set(prompt.db_key, &answer) {
+                Err(_) => eprintln!("Failed writing value to prickle db"),
+                _ => {},
+            };
+            Some(answer)
+        },
+        None => None,
+    }
 }
 
 fn resolve(result: StdResult<String, std::io::Error>) -> Option<String> {
@@ -138,22 +141,22 @@ mod tests {
         let bool_val = true;
         {
             let mut db = get_db();
-            db.set(&PROMPT_BB_PASSWORD.db_key, &password_string).unwrap();
+            db.set("foo", &password_string).unwrap();
         }
         {
             let mut db = get_db();
-            db.set(&PROMPT_BB_USERNAME.db_key, &user_string).unwrap();
+            db.set("bar", &user_string).unwrap();
         }
         {
             let mut db = get_db();
-            db.set(&PROMPT_VERBOSE.db_key, &bool_val).unwrap();
+            db.set("poo", &bool_val).unwrap();
         }
         let db = get_db();
-        let user: Option<String> = db.get(&PROMPT_BB_USERNAME.db_key);
+        let user: Option<String> = db.get("bar");
         assert_eq!(user, Some(user_string));
-        let password: Option<String> = db.get(&PROMPT_BB_PASSWORD.db_key);
+        let password: Option<String> = db.get("foo");
         assert_eq!(password, Some(password_string));
-        let verbose: Option<bool> = db.get(&PROMPT_VERBOSE.db_key);
+        let verbose: Option<bool> = db.get("poo");
         assert_eq!(verbose, Some(bool_val));
     }
 }
