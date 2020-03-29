@@ -1,6 +1,6 @@
 [package]
 name = "bitbucket_server_cli"
-version = "0.2.0"
+version = "0.2.1"
 authors = ["Jens Brimfors <jens.brimfors@gmail.se>"]
 edition = "2018"
 license = "MIT"
@@ -26,3 +26,7 @@ git2 = "0.11"
 indicatif = "0.14"
 pickledb = "0.4"
 dialoguer = "0.5"
+
+[badges]
+travis-ci = { repository = "jensim/bitbucket_server_cli", branch = "master" }
+maintenance = { status = "experimental" }
