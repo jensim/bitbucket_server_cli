@@ -10,7 +10,7 @@ use rayon::ThreadPool;
 
 use crate::types::{Opts, Repo};
 
-pub fn git_going(opts: &Opts, repos: Vec<Repo>) {
+pub fn git_going(opts: &Opts, repos: &Vec<Repo>) {
     println!("Started working {} repositories", repos.len());
     let bar: ProgressBar = ProgressBar::new(repos.len() as u64);
     bar.set_style(ProgressStyle::default_bar()

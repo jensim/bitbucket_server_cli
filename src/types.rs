@@ -1,6 +1,6 @@
 use structopt::StructOpt;
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "BitBucket Server Cli")]
 pub struct Opts {
     #[structopt(short = "A", long = "all", name = "Check out all projects")]
