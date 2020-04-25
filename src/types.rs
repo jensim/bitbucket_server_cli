@@ -75,7 +75,7 @@ pub struct CloneLink {
     pub href: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Repo {
     pub project_key: String,
     pub git: String,

@@ -23,7 +23,6 @@ futures = "0.3"
 tokio = { version = "0.2", features = ["full"] }
 generic_error = "0.1"
 structopt = "0.3"
-rayon = "1.3"
 indicatif = "0.14"
 pickledb = "0.4"
 dialoguer = "0.5"

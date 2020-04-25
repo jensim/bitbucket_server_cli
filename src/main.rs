@@ -19,6 +19,7 @@ use reqwest::{
 use structopt::StructOpt;
 
 use crate::{
+    git::Git,
     input::select_projects,
     types::{
         AllProjects,
@@ -66,11 +67,11 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         }
         repos = tmp_vec;
     }
-    git::git_going(&opts, &repos);
+    Git { opts, repos }.git_going().await;
     Ok(())
 }
 
-type MyDynFuture = Pin<Box<dyn Future<Output=Result<Vec<Repo>>>>>;
+type FetchFuture = Pin<Box<dyn Future<Output=Result<Vec<Repo>>>>>;
 
 async fn fetch_all(opts: Opts) -> Result<Vec<Repo>> {
     let mut all: Vec<Repo> = Vec::new();
@@ -78,7 +79,8 @@ async fn fetch_all(opts: Opts) -> Result<Vec<Repo>> {
         Ok(v) => v,
         Err(e) => panic!("Failed fetching projects from bitbucket. {}", e.msg),
     };
-    let i: Vec<MyDynFuture> = all_projects.iter().map(|p: &ProjDesc| -> MyDynFuture { fetch_one(p.key.clone(), opts.clone()).boxed() }).collect();
+    let i: Vec<FetchFuture> = all_projects.iter()
+        .map(|p: &ProjDesc| -> FetchFuture { fetch_one(p.key.clone(), opts.clone()).boxed() }).collect();
     let all_repo_requests: Vec<Result<Vec<Repo>>> = join_all(i).await;
     for response in all_repo_requests {
         match response {

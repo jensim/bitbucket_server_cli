@@ -1,113 +1,150 @@
 use std::{
-    path::Path,
-    process::{Command, Output},
+    path::Path
 };
+use std::borrow::Borrow;
+use std::pin::Pin;
+use std::process::Output;
 
-use generic_error::Result;
+use futures::{
+    Future,
+    future::join_all,
+    FutureExt,
+    stream::{self, StreamExt},
+};
+use generic_error::{GenericError, Result};
 use indicatif::{ProgressBar, ProgressStyle};
-use rayon::prelude::*;
-use rayon::ThreadPool;
+use tokio::process::Command;
 
 use crate::types::{Opts, Repo};
 
-pub fn git_going(opts: &Opts, repos: &Vec<Repo>) {
-    println!("Started working {} repositories", repos.len());
-    let bar: ProgressBar = ProgressBar::new(repos.len() as u64);
-    bar.set_style(ProgressStyle::default_bar()
-        .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})")
-        .progress_chars("#>-"));
-    let mut projects: Vec<String> = repos.iter().map(|r| r.project_key.clone()).collect();
-    projects.dedup();
-    projects.iter().for_each(|p| match std::fs::create_dir(p) {
-        Ok(_) => {},
-        Err(ref e) if e.kind() == std::io::ErrorKind::AlreadyExists => {},
-        Err(e) => panic!("{:?}", e),
-    });
+type CloneFuture = Pin<Box<dyn Future<Output=Result<()>>>>;
 
-    let pool: ThreadPool = rayon::ThreadPoolBuilder::new().num_threads(opts.thread_count).build().unwrap();
-    let failed: Vec<String> = pool.install(|| {
-        repos.into_par_iter().map(|repo| {
-            let result = match clone_or_update(&repo, &opts) {
-                Ok(_result) => None,
-                Err(e) => Some(format!("{}/{} error:{}", repo.project_key, repo.name, e.msg))
-            };
-            bar.inc(1);
-            result
-        }).filter_map(|result: Option<String>| result).collect()
-    });
-    bar.finish();
+#[derive(Clone)]
+pub struct Git {
+    pub repos: Vec<Repo>,
+    pub opts: Opts,
+}
 
-    if !failed.is_empty() {
-        eprintln!("\n{} projects failed to update or clone.", failed.len());
-        for fail in failed {
-            eprintln!("{}", fail);
+impl Git {
+    pub async fn git_going(self) {
+        println!("Started working {} repositories", self.repos.len());
+        let bar: ProgressBar = ProgressBar::new(self.repos.len() as u64);
+        bar.set_style(ProgressStyle::default_bar()
+            .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})")
+            .progress_chars("#>-"));
+        let mut projects: Vec<String> = self.repos.iter().map(|r| r.project_key.clone()).collect();
+        projects.dedup();
+        projects.iter().for_each(|p| match std::fs::create_dir(p) {
+            Ok(_) => {},
+            Err(ref e) if e.kind() == std::io::ErrorKind::AlreadyExists => {},
+            Err(e) => panic!("{:?}", e),
+        });
+        let clone_result = stream::iter(
+            self.repos.iter().map(|repo| {
+                let reset = self.opts.reset_state;
+                let bar = bar.clone();
+                async move {
+                    let result = clone_or_update(&repo, reset).await;
+                    bar.inc(1);
+                    result
+                }
+            })
+        ).buffer_unordered(self.opts.thread_count).collect::<Vec<Result<()>>>().await;
+        bar.finish();
+        let mut failed: Vec<String> = vec![];
+        for result in clone_result {
+            match result {
+                Err(e) => failed.push(e.msg),
+                _ => {},
+            }
+        }
+
+        if !failed.is_empty() {
+            eprintln!("\n{} projects failed to update or clone.", failed.len());
+            for fail in failed {
+                eprintln!("{}", fail);
+            }
         }
     }
 }
 
-fn clone_or_update<'a>(repo: &'a Repo, opts: &Opts) -> Result<&'a str> {
+async fn clone_or_update(repo: &Repo, do_reset_state: bool) -> Result<()> {
     match dir_exists(&repo) {
         true => {
-            if opts.reset_state {
-                git_reset(repo)?;
+            if do_reset_state {
+                git_reset(repo).await?;
             }
-            Ok(git_update(&repo)?)
+            match git_update(&repo).await {
+                Ok(_) => Ok(()),
+                Err(e) => Err(GenericError { msg: format!("Failed with repo {}/{}. Cause: {}", repo.project_key, repo.name, e.msg) }),
+            }
         }
         false => {
-            git_clone(&repo)?;
-            git_reset(repo)?;
-            Ok(&"c")
+            git_clone(&repo).await?;
+            git_reset(repo).await?;
+            Ok(())
         }
     }
 }
 
-fn git_clone(repo: &Repo) -> Result<&str> {
+async fn git_clone(repo: &Repo) -> Result<()> {
     let string_path = format!("./{}", repo.project_key);
     let path = Path::new(&string_path);
-    let out = exec(&*format!("git clone {}", repo.git), path)?;
+    let out = exec(&*format!("git clone {}", repo.git), path).await?;
 
     let success = out.status.success();
     return match success {
-        true => Ok("c"),
-        false => Ok("e")
+        true => Ok(()),
+        false => Err(generate_repo_err_from_output("Failed git clone", repo, out.stdout)),
     }
 }
 
-fn git_update(repo: &Repo) -> Result<&str> {
+async fn git_update(repo: &Repo) -> Result<()> {
     let string_path = path(&repo);
     let path = Path::new(&string_path);
-    let out = exec("git pull --ff-only", path)?;
+    let out = exec("git pull --ff-only", path).await?;
     let success = out.status.success();
-    let output = format!("{:?}", std::str::from_utf8(out.stdout.as_slice()));
     return if success {
-        if output.contains(&"Already up to date.") {
-            Ok("u")
-        } else {
-            Ok("U")
-        }
+        Ok(())
     } else {
-        Ok("e")
+        Err(generate_repo_err_from_output("Failed git pull", repo, out.stdout))
     }
 }
 
-fn git_reset(repo: &Repo) -> Result<()> {
+async fn git_reset(repo: &Repo) -> Result<()> {
     let string_path = path(repo);
     let path = Path::new(&string_path);
-    exec("git reset --hard", path)?;
-    exec("git checkout master --quiet --force --theirs", path)?;
-    Ok(())
+    match exec("git reset --hard", path).await {
+        Ok(_) => match exec("git checkout master --quiet --force --theirs", path).await {
+            Ok_ => Ok(()),
+            Err(e) => Err(generate_repo_err("Failed 'checkout master'", repo, e.msg))
+        },
+        Err(e) => Err(generate_repo_err("Failed resetting repo", repo, e.msg))
+    }
 }
 
-fn exec(cmd: &str, path: &Path) -> Result<Output> {
+fn generate_repo_err_from_output(prefix: &str, repo: &Repo, cause: Vec<u8>) -> GenericError {
+    let string = match std::str::from_utf8(cause.as_slice()) {
+        Ok(cause) => cause.to_owned(),
+        Err(_) => "-".to_owned()
+    };
+    generate_repo_err(prefix, repo, string)
+}
+
+fn generate_repo_err(prefix: &str, repo: &Repo, cause: String) -> GenericError {
+    GenericError { msg: format!("{} {}/{}. Cause: {}", prefix, repo.project_key, repo.name, cause) }
+}
+
+async fn exec(cmd: &str, path: &Path) -> Result<Output> {
     let is_win: bool = cfg!(target_os = "windows");
-    return match is_win {
+    match is_win {
         true => {
-            Ok(Command::new("cmd").args(&["/C", cmd]).current_dir(path).output()?)
+            Ok(Command::new("cmd").args(&["/C", cmd]).current_dir(path).output().await?)
         },
         false => {
-            Ok(Command::new("sh").args(&["-c", cmd]).current_dir(path).output()?)
+            Ok(Command::new("sh").args(&["-c", cmd]).current_dir(path).output().await?)
         }
-    };
+    }
 }
 
 fn path(repo: &Repo) -> String {
