@@ -6,12 +6,12 @@ use generic_error::{GenericError, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use tokio::process::Command;
 
-use crate::types::{Opts, Repo};
+use crate::types::{GitOpts, Repo};
 
 #[derive(Clone)]
 pub struct Git {
     pub repos: Vec<Repo>,
-    pub opts: Opts,
+    pub opts: GitOpts,
 }
 
 impl Git {
@@ -38,7 +38,7 @@ impl Git {
                     result
                 }
             })
-        ).buffer_unordered(self.opts.thread_count).collect::<Vec<Result<()>>>().await;
+        ).buffer_unordered(self.opts.concurrency).collect::<Vec<Result<()>>>().await;
         bar.finish();
         let mut failed: Vec<String> = vec![];
         for result in clone_result {
@@ -63,40 +63,39 @@ async fn clone_or_update(repo: &Repo, do_reset_state: bool) -> Result<()> {
             if do_reset_state {
                 git_reset(repo).await?;
             }
-            match git_update(&repo).await {
-                Ok(_) => Ok(()),
-                Err(e) => Err(GenericError { msg: format!("Failed with repo {}/{}. Cause: {}", repo.project_key, repo.name, e.msg) }),
-            }
+            git_update(&repo).await?;
         }
         false => {
             git_clone(&repo).await?;
             git_reset(repo).await?;
-            Ok(())
         }
     }
+    Ok(())
 }
 
 async fn git_clone(repo: &Repo) -> Result<()> {
     let string_path = format!("./{}", repo.project_key);
     let path = Path::new(&string_path);
-    let out = exec(&*format!("git clone {}", repo.git), path).await?;
 
-    let success = out.status.success();
-    return match success {
-        true => Ok(()),
-        false => Err(generate_repo_err_from_output("Failed git clone", repo, out.stdout)),
+    let fail_prefix = "Failed git clone";
+    match exec(&*format!("git clone {}", repo.git), path).await {
+        Ok(o) if o.status.success() => Ok(()),
+        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_prefix, repo, o.stdout, o.stderr)),
+        Err(e) => Err(generate_repo_err(fail_prefix, repo, e.msg)),
+        _ => Err(generate_repo_err(fail_prefix, repo, "unknown".to_owned()))
     }
 }
 
 async fn git_update(repo: &Repo) -> Result<()> {
     let string_path = path(&repo);
     let path = Path::new(&string_path);
-    let out = exec("git pull --ff-only", path).await?;
-    let success = out.status.success();
-    return if success {
-        Ok(())
-    } else {
-        Err(generate_repo_err_from_output("Failed git pull", repo, out.stdout))
+
+    let fail_prefix = "Failed git pull";
+    match exec("git pull --ff-only", path).await {
+        Ok(o) if o.status.success() => Ok(()),
+        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_prefix, repo, o.stdout, o.stderr)),
+        Err(e) => Err(generate_repo_err(fail_prefix, repo, e.msg)),
+        _ => Err(generate_repo_err(fail_prefix, repo, "unknown".to_owned()))
     }
 }
 
@@ -112,12 +111,24 @@ async fn git_reset(repo: &Repo) -> Result<()> {
     }
 }
 
-fn generate_repo_err_from_output(prefix: &str, repo: &Repo, cause: Vec<u8>) -> GenericError {
-    let string = match std::str::from_utf8(cause.as_slice()) {
-        Ok(cause) => cause.to_owned(),
-        Err(_) => "-".to_owned()
+fn generate_repo_err_from_output(prefix: &str, repo: &Repo, cause_out: Vec<u8>, cause_err: Vec<u8>) -> GenericError {
+    let cause = match (cause_to_str(cause_err), cause_to_str(cause_out)) {
+        (Some(e), Some(o)) => format!("Err: '{}' Output: '{}'", e, o),
+        (Some(e), None) => format!("Err: '{}'", e),
+        (None, Some(o)) => format!("Output: '{}'", o),
+        (None, None) => format!("no output"),
     };
-    generate_repo_err(prefix, repo, string)
+    generate_repo_err(prefix, repo, cause)
+}
+
+fn cause_to_str(cause: Vec<u8>) -> Option<String> {
+    if cause.is_empty() {
+        return None;
+    }
+    match std::str::from_utf8(cause.as_slice()) {
+        Ok(cause) => Some(cause.to_owned()),
+        _ => None
+    }
 }
 
 fn generate_repo_err(prefix: &str, repo: &Repo, cause: String) -> GenericError {

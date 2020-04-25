@@ -10,37 +10,42 @@ use crate::prompts::{
     PROMPT_BB_PROJECT_SOME,
     PROMPT_BB_SERVER,
     PROMPT_BB_USERNAME};
-use crate::types::{Opts, Repo};
+use crate::types::{BitBucketOpts, GitOpts, Opts, Repo};
 
 const PROP_FILE: &str = ".bitbucket_server_cli.db";
 
 pub fn opts(opts: &Opts) -> Opts {
-    let bit_bucket_server: Option<String> = match opts.bit_bucket_server.clone() {
+    let bit_bucket_server: Option<String> = match opts.bitbucket_opts.server.clone() {
         None => get_with_default(&PROMPT_BB_SERVER, None, false),
         Some(s) => Some(s)
     };
-    let bit_bucket_username: Option<String> = match opts.bit_bucket_username.clone() {
+    let bit_bucket_username: Option<String> = match opts.bitbucket_opts.username.clone() {
         None => get_with_default(&PROMPT_BB_USERNAME, None, true),
         Some(s) => Some(s)
     };
     let bit_bucket_password: Option<String> = match bit_bucket_username {
         None => None,
-        Some(_) => match opts.bit_bucket_password.clone() {
+        Some(_) => match opts.bitbucket_opts.password.clone() {
             None => get_password(&PROMPT_BB_PASSWORD),
             Some(s) => Some(s)
         }
     };
-    let bit_bucket_project_all: bool = opts.bit_bucket_project_all || get_bool(&PROMPT_BB_PROJECT_ALL, false);
+    let bit_bucket_project_all: bool = opts.git_opts.clone_all || get_bool(&PROMPT_BB_PROJECT_ALL, false);
 
     Opts {
-        bit_bucket_project_all,
-        bit_bucket_server,
-        bit_bucket_username,
-        bit_bucket_password,
-        reset_state: opts.reset_state,
-        thread_count: opts.thread_count,
+        bitbucket_opts: BitBucketOpts {
+            password: bit_bucket_password,
+            server: bit_bucket_server,
+            username: bit_bucket_username,
+            concurrency: opts.bitbucket_opts.concurrency,
+        },
+        git_opts: GitOpts {
+            reset_state: opts.git_opts.reset_state,
+            clone_all: bit_bucket_project_all,
+            project_keys: opts.git_opts.project_keys.clone(),
+            concurrency: opts.git_opts.concurrency,
+        },
         interactive: opts.interactive,
-        bit_bucket_project_keys: opts.bit_bucket_project_keys.clone(),
     }
 }
 
