@@ -3,28 +3,14 @@ extern crate reqwest;
 #[macro_use]
 extern crate serde;
 
-use std::pin::Pin;
-
-use futures::{
-    Future,
-    future::FutureExt,
-    future::join_all,
-};
-use generic_error::Result;
-use reqwest::{
-    Client as ReqwestClient,
-    header::ACCEPT,
-    RequestBuilder,
-};
 use structopt::StructOpt;
 
 use crate::{
+    bitbucket::Bitbucket,
     git::Git,
     input::select_projects,
     types::{
-        AllProjects,
         Opts,
-        ProjDesc,
         Repo,
     },
 };
@@ -33,6 +19,7 @@ mod types;
 mod git;
 mod input;
 mod prompts;
+mod bitbucket;
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
@@ -47,7 +34,8 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         println!("project selection is required (all or keys)");
         std::process::exit(1);
     }
-    let mut repos: Vec<Repo> = match fetch_all(opts.clone()).await {
+    let bb = Bitbucket { opts: opts.clone() };
+    let mut repos: Vec<Repo> = match bb.fetch_all().await {
         Ok(r) => r,
         _ => {
             println!("Failed fetching repos from bitbucket");
@@ -69,52 +57,4 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     }
     Git { opts, repos }.git_going().await;
     Ok(())
-}
-
-type FetchFuture = Pin<Box<dyn Future<Output=Result<Vec<Repo>>>>>;
-
-async fn fetch_all(opts: Opts) -> Result<Vec<Repo>> {
-    let mut all: Vec<Repo> = Vec::new();
-    let all_projects: Vec<ProjDesc> = match fetch_all_projects(&opts).await {
-        Ok(v) => v,
-        Err(e) => panic!("Failed fetching projects from bitbucket. {}", e.msg),
-    };
-    let i: Vec<FetchFuture> = all_projects.iter()
-        .map(|p: &ProjDesc| -> FetchFuture { fetch_one(p.key.clone(), opts.clone()).boxed() }).collect();
-    let all_repo_requests: Vec<Result<Vec<Repo>>> = join_all(i).await;
-    for response in all_repo_requests {
-        match response {
-            Ok(repos) => {
-                for repo in repos {
-                    all.push(repo);
-                }
-            },
-            Err(_e) => {}
-        };
-    }
-    Ok(all)
-}
-
-async fn fetch_all_projects(opts: &Opts) -> Result<Vec<ProjDesc>> {
-    let host = opts.bit_bucket_server.clone().unwrap();
-    let url = format!("{}/rest/api/1.0/projects?limit=100000", host);
-    Ok(bake_client(url, opts).send().await?.json::<AllProjects>().await?.values)
-}
-
-async fn fetch_one(project_key: String, opts: Opts) -> Result<Vec<Repo>> {
-    let url = format!("{host}/rest/api/latest/projects/{key}/repos?limit=5000",
-                      host = opts.bit_bucket_server.clone().unwrap().to_lowercase(),
-                      key = project_key);
-    let projects: types::Projects = bake_client(url, &opts).send().await?
-        .json::<types::Projects>().await?;
-    return Ok(projects.get_clone_links());
-}
-
-fn bake_client(url: String, opts: &Opts) -> RequestBuilder {
-    let builder: RequestBuilder = ReqwestClient::new().get(url.trim())
-        .header(ACCEPT, "application/json");
-    return match (&opts.bit_bucket_username, &opts.bit_bucket_password) {
-        (Some(u), Some(p)) => builder.basic_auth(u.clone(), Some(p.clone())),
-        _ => builder,
-    };
 }
