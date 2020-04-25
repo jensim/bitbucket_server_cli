@@ -1,23 +1,12 @@
-use std::{
-    path::Path
-};
-use std::borrow::Borrow;
-use std::pin::Pin;
+use std::path::Path;
 use std::process::Output;
 
-use futures::{
-    Future,
-    future::join_all,
-    FutureExt,
-    stream::{self, StreamExt},
-};
+use futures::stream::{self, StreamExt};
 use generic_error::{GenericError, Result};
 use indicatif::{ProgressBar, ProgressStyle};
 use tokio::process::Command;
 
 use crate::types::{Opts, Repo};
-
-type CloneFuture = Pin<Box<dyn Future<Output=Result<()>>>>;
 
 #[derive(Clone)]
 pub struct Git {
@@ -116,8 +105,8 @@ async fn git_reset(repo: &Repo) -> Result<()> {
     let path = Path::new(&string_path);
     match exec("git reset --hard", path).await {
         Ok(_) => match exec("git checkout master --quiet --force --theirs", path).await {
-            Ok_ => Ok(()),
-            Err(e) => Err(generate_repo_err("Failed 'checkout master'", repo, e.msg))
+            Err(e) => Err(generate_repo_err("Failed 'checkout master'", repo, e.msg)),
+            Ok(_) => Ok(()),
         },
         Err(e) => Err(generate_repo_err("Failed resetting repo", repo, e.msg))
     }
