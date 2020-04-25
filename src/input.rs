@@ -44,6 +44,7 @@ pub fn opts(opts: &Opts) -> Opts {
             clone_all: bit_bucket_project_all,
             project_keys: opts.git_opts.project_keys.clone(),
             concurrency: opts.git_opts.concurrency,
+            quiet: opts.git_opts.quiet,
         },
         interactive: opts.interactive,
     }

@@ -33,6 +33,8 @@ pub struct GitOpts {
     pub reset_state: bool,
     #[structopt(short = "g", long = "concurrent_git", name = "Number of concurrent git actions. Bitbucket might have a limited number of threads reserved for serving git requests - if you drive this value to high you might block your CI, colleagues or even crash bitbucket. Max=100", default_value = "3")]
     pub concurrency: usize,
+    #[structopt(short = "Q", long = "git_quiet", name = "Suppress warnings from failed git actions.")]
+    pub quiet: bool,
 }
 
 #[derive(Deserialize, Debug)]

@@ -50,8 +50,10 @@ impl Git {
 
         if !failed.is_empty() {
             eprintln!("\n{} projects failed to update or clone.", failed.len());
-            for fail in failed {
-                eprintln!("{}", fail);
+            if !self.opts.quiet {
+                for fail in failed {
+                    eprintln!("{}", fail);
+                }
             }
         }
     }
