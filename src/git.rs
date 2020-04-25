@@ -79,12 +79,12 @@ async fn git_clone(repo: &Repo) -> Result<()> {
     let string_path = format!("./{}", repo.project_key);
     let path = Path::new(&string_path);
 
-    let fail_prefix = "Failed git clone";
+    let fail_suffix = "failed git clone";
     match exec(&*format!("git clone {}", repo.git), path).await {
         Ok(o) if o.status.success() => Ok(()),
-        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_prefix, repo, o.stdout, o.stderr)),
-        Err(e) => Err(generate_repo_err(fail_prefix, repo, e.msg)),
-        _ => Err(generate_repo_err(fail_prefix, repo, "unknown".to_owned()))
+        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_suffix, repo, o.stdout, o.stderr)),
+        Err(e) => Err(generate_repo_err(fail_suffix, repo, e.msg)),
+        _ => Err(generate_repo_err(fail_suffix, repo, "unknown".to_owned()))
     }
 }
 
@@ -92,12 +92,12 @@ async fn git_update(repo: &Repo) -> Result<()> {
     let string_path = path(&repo);
     let path = Path::new(&string_path);
 
-    let fail_prefix = "Failed git pull";
+    let fail_suffix = "failed git pull";
     match exec("git pull --ff-only", path).await {
         Ok(o) if o.status.success() => Ok(()),
-        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_prefix, repo, o.stdout, o.stderr)),
-        Err(e) => Err(generate_repo_err(fail_prefix, repo, e.msg)),
-        _ => Err(generate_repo_err(fail_prefix, repo, "unknown".to_owned()))
+        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_suffix, repo, o.stdout, o.stderr)),
+        Err(e) => Err(generate_repo_err(fail_suffix, repo, e.msg)),
+        _ => Err(generate_repo_err(fail_suffix, repo, "unknown".to_owned()))
     }
 }
 
@@ -106,21 +106,21 @@ async fn git_reset(repo: &Repo) -> Result<()> {
     let path = Path::new(&string_path);
     match exec("git reset --hard", path).await {
         Ok(_) => match exec("git checkout master --quiet --force --theirs", path).await {
-            Err(e) => Err(generate_repo_err("Failed 'checkout master'", repo, e.msg)),
+            Err(e) => Err(generate_repo_err("failed 'checkout master'", repo, e.msg)),
             Ok(_) => Ok(()),
         },
-        Err(e) => Err(generate_repo_err("Failed resetting repo", repo, e.msg))
+        Err(e) => Err(generate_repo_err("failed resetting repo", repo, e.msg))
     }
 }
 
-fn generate_repo_err_from_output(prefix: &str, repo: &Repo, cause_out: Vec<u8>, cause_err: Vec<u8>) -> GenericError {
+fn generate_repo_err_from_output(suffix: &str, repo: &Repo, cause_out: Vec<u8>, cause_err: Vec<u8>) -> GenericError {
     let cause = match (cause_to_str(cause_err), cause_to_str(cause_out)) {
-        (Some(e), Some(o)) => format!("Err: '{}' Output: '{}'", e, o),
-        (Some(e), None) => format!("Err: '{}'", e),
-        (None, Some(o)) => format!("Output: '{}'", o),
+        (Some(e), Some(o)) => format!("Err: '{}' Output: '{}'", e.trim(), o.trim()),
+        (Some(e), None) => format!("Err: '{}'", e.trim()),
+        (None, Some(o)) => format!("Output: '{}'", o.trim()),
         (None, None) => format!("no output"),
     };
-    generate_repo_err(prefix, repo, cause)
+    generate_repo_err(suffix, repo, cause)
 }
 
 fn cause_to_str(cause: Vec<u8>) -> Option<String> {
@@ -133,8 +133,8 @@ fn cause_to_str(cause: Vec<u8>) -> Option<String> {
     }
 }
 
-fn generate_repo_err(prefix: &str, repo: &Repo, cause: String) -> GenericError {
-    GenericError { msg: format!("{} {}/{}. Cause: {}", prefix, repo.project_key, repo.name, cause) }
+fn generate_repo_err(suffix: &str, repo: &Repo, cause: String) -> GenericError {
+    GenericError { msg: format!("{}/{} {}. Cause: {}", repo.project_key, repo.name, suffix, cause) }
 }
 
 async fn exec(cmd: &str, path: &Path) -> Result<Output> {
