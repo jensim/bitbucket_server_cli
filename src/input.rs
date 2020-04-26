@@ -38,6 +38,7 @@ pub fn opts(opts: &Opts) -> Opts {
             server: bit_bucket_server,
             username: bit_bucket_username,
             concurrency: opts.bitbucket_opts.concurrency,
+            verbose: opts.bitbucket_opts.verbose,
         },
         git_opts: GitOpts {
             reset_state: opts.git_opts.reset_state,

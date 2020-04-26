@@ -21,6 +21,8 @@ pub struct BitBucketOpts {
     pub password: Option<String>,
     #[structopt(short = "b", long = "concurrent_http", name = "Number of concurrent http requests towards bitbucket. Keep it sane, keep bitbucket alive for all. Max=100", default_value = "10")]
     pub concurrency: usize,
+    #[structopt(short = "H", long = "http_verbose", name = "Output full http response on failed bitbucket requests.")]
+    pub verbose: bool,
 }
 
 #[derive(StructOpt, Clone, Debug)]

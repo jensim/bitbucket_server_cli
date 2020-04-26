@@ -8,43 +8,40 @@ BitBucket Server Cli
 ![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)
 ![Maintenance](https://img.shields.io/badge/maintenance-experimental-blue.svg)
 
+* [Install](#install)
+* [Run](#run)
+* [Caveats](#caveats)
+
 ## Install
-```sh
+```shell script
 # From brew
 brew install jensim/bitbucket_server_cli/bitbucket_server_cli
-# or from cargo
+
+# From cargo
 cargo install bitbucket_server_cli
+
+# From source
+cargo install --path . --force
 ```
 
 ## Run
-```sh
+```shell script
 # Fully interactive
 bitbucket_server_cli -I
+
 # Partially interactive
 bitbucket_server_cli -I -s https://example.com
-# Fully NON-interactive 
-bitbucket_server_cli -s https://example.com
-```
 
-## Run from source
-```sh
-➜  bitbucket_server_cli git:(master) ✗ cargo run -- -I
-BitBucket server address: https://example.com
-BitBucket username: user
-BitBucket password: [hidden]
-Clone/update all found projects with repos yes
-Started working 1337 repositories
-[00:01:41] [########################################] 1337/1337 (eta:0s)
-➜  bitbucket_server_cli git:(master) ✗ 
-```
+# Batch mode 
+bitbucket_server_cli -s https://example.com -A
 
-## Install from source
-```sh
-cargo install --path . --force
-bitbucket_server_cli
+# 'Safe' password usage in batch mode. Depending on terminal, password might be seen in process description.
+IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
+bitbucket_server_cli -s https://example.com -A -u jensim -w $BITBUCKET_PASSWORD
+
+# Run from source
+cargo run -- -I
 ```
 
 ## Caveats
-- Update is currently implemented by delegating to shell git
-- git auth expects the current shell user to have a valid id_rsa file in `$HOME/.ssh/`
 - only tested on Mac OS X
