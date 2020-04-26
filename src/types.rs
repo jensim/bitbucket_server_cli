@@ -3,7 +3,7 @@ use structopt::StructOpt;
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "BitBucket Server Cli")]
 pub struct Opts {
-    #[structopt(short = "I", long = "interactive", name = "Run terminal in interactive mode, asking for required params like password user, host etc")]
+    #[structopt(short = "I", long = "interactive", name = "interactive", help = "Run terminal in interactive mode, asking for required params like password user, host etc")]
     pub interactive: bool,
     #[structopt(flatten)]
     pub bitbucket_opts: BitBucketOpts,
@@ -13,29 +13,31 @@ pub struct Opts {
 
 #[derive(StructOpt, Clone, Debug)]
 pub struct BitBucketOpts {
-    #[structopt(short = "s", long = "server", name = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
+    #[structopt(short = "s", long = "server", name = "bitbucket_server", help = "BitBucket server base url, http://example.bitbucket.mycompany.com")]
     pub server: Option<String>,
-    #[structopt(short = "u", long = "username", name = "BitBucket username", )]
+    #[structopt(short = "u", long = "username", name = "bitbucket_username", help = "BitBucket username", )]
     pub username: Option<String>,
-    #[structopt(short = "w", long = "password", name = "BitBucket password")]
+    #[structopt(short = "w", long = "password", name = "bitbucket_password", help = "BitBucket password")]
     pub password: Option<String>,
-    #[structopt(short = "b", long = "concurrent_http", name = "Number of concurrent http requests towards bitbucket. Keep it sane, keep bitbucket alive for all. Max=100", default_value = "10")]
+    #[structopt(short = "b", long = "concurrent_http", name = "bitbucket_concurrency", help = "Number of concurrent http requests towards bitbucket. Keep it sane, keep bitbucket alive for all. Max=100", default_value = "10")]
     pub concurrency: usize,
-    #[structopt(short = "H", long = "http_verbose", name = "Output full http response on failed bitbucket requests.")]
+    #[structopt(short = "H", long = "http_verbose", name = "bitbucket_verbose", help = "Output full http response on failed bitbucket requests.")]
     pub verbose: bool,
+    #[structopt(short = "W", long = "env_password", name = "bitbucket_password_from_env", help = "Try get password from env variable BITBUCKET_PASSWORD.\nTry it out without showing your password:\nIFS= read -rs BITBUCKET_PASSWORD < /dev/tty  && export BITBUCKET_PASSWORD\n")]
+    pub password_from_env: bool,
 }
 
 #[derive(StructOpt, Clone, Debug)]
 pub struct GitOpts {
-    #[structopt(short = "A", long = "all", name = "Clone all projects")]
+    #[structopt(short = "A", long = "all", name = "git_clone_all", help = "Clone all projects")]
     pub clone_all: bool,
-    #[structopt(short = "k", long = "key", name = "BitBucket Project keys")]
+    #[structopt(short = "k", long = "key", name = "git_project_keys", help = "BitBucket Project keys")]
     pub project_keys: Vec<String>,
-    #[structopt(short = "R", long = "reset", name = "Reset repos before updating, and switch to master branch")]
+    #[structopt(short = "R", long = "reset", name = "git_reset_state", help = "Reset repos before updating, and switch to master branch")]
     pub reset_state: bool,
-    #[structopt(short = "g", long = "concurrent_git", name = "Number of concurrent git actions. Bitbucket might have a limited number of threads reserved for serving git requests - if you drive this value to high you might block your CI, colleagues or even crash bitbucket. Max=100", default_value = "3")]
+    #[structopt(short = "g", long = "concurrent_git", name = "git_concurrency", help = "Number of concurrent git actions. Bitbucket might have a limited number of threads reserved for serving git requests - if you drive this value to high you might block your CI, colleagues or even crash bitbucket. Max=100", default_value = "3")]
     pub concurrency: usize,
-    #[structopt(short = "Q", long = "git_quiet", name = "Suppress warnings from failed git actions.")]
+    #[structopt(short = "Q", long = "git_quiet", name = "git_quiet", help = "Suppress warnings from failed git actions.")]
     pub quiet: bool,
 }
 

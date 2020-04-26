@@ -8,7 +8,10 @@ use structopt::StructOpt;
 use crate::{
     bitbucket::Bitbucket,
     git::Git,
-    input::select_projects,
+    input::{
+        password_from_env,
+        select_projects,
+    },
     types::{
         Opts,
         Repo,
@@ -37,11 +40,20 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
         println!("Max concurrent actions = 100");
         std::process::exit(1);
     }
+    if opts.bitbucket_opts.password_from_env {
+        match password_from_env() {
+            Ok(pass) => opts.bitbucket_opts.password = Some(pass),
+            Err(e) => {
+                println!("Failed getting env password. {}", e.msg);
+                std::process::exit(1);
+            }
+        }
+    }
     let bb = Bitbucket { opts: opts.bitbucket_opts.clone() };
     let mut repos: Vec<Repo> = match bb.fetch_all().await {
         Ok(r) => r,
-        _ => {
-            println!("Failed fetching repos from bitbucket");
+        Err(e) => {
+            println!("Failed getting password from env. {}", e.msg);
             std::process::exit(1);
         }
     };

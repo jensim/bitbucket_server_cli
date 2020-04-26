@@ -1,6 +1,7 @@
 use std::result::Result as StdResult;
 
 use dialoguer::{Checkboxes, Confirmation, Input, PasswordInput, theme::ColorfulTheme};
+use generic_error::{GenericError, Result};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
 use crate::prompts::{
@@ -26,7 +27,11 @@ pub fn opts(opts: &Opts) -> Opts {
     let bit_bucket_password: Option<String> = match bit_bucket_username {
         None => None,
         Some(_) => match opts.bitbucket_opts.password.clone() {
-            None => get_password(&PROMPT_BB_PASSWORD),
+            None => if opts.bitbucket_opts.password_from_env {
+                None
+            } else {
+                get_password(&PROMPT_BB_PASSWORD)
+            },
             Some(s) => Some(s)
         }
     };
@@ -39,6 +44,7 @@ pub fn opts(opts: &Opts) -> Opts {
             username: bit_bucket_username,
             concurrency: opts.bitbucket_opts.concurrency,
             verbose: opts.bitbucket_opts.verbose,
+            password_from_env: opts.bitbucket_opts.password_from_env,
         },
         git_opts: GitOpts {
             reset_state: opts.git_opts.reset_state,
@@ -82,6 +88,14 @@ pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
     filtered
 }
 
+pub fn password_from_env() -> Result<String> {
+    let key = "BITBUCKET_PASSWORD";
+    match std::env::var(key) {
+        Ok(val) => Ok(val),
+        Err(e) => Err(GenericError { msg: format!("{} is not defined in the environment. {:?}", key, e) })
+    }
+}
+
 fn get_db() -> PickleDb {
     PickleDb::load(PROP_FILE, PickleDbDumpPolicy::AutoDump, SerializationMethod::Yaml)
         .unwrap_or(PickleDb::new(PROP_FILE, PickleDbDumpPolicy::AutoDump, SerializationMethod::Yaml))
@@ -105,7 +119,7 @@ fn get_bool(prompt: &Prompt, default: bool) -> bool {
         .interact().unwrap_or(default);
     match db.set(prompt.db_key, &prompt_val) {
         Err(_) => eprintln!("Failed writing value to prickle db"),
-        _ => {},
+        _ => {}
     };
     prompt_val
 }
@@ -123,10 +137,10 @@ fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool)
         Some(answer) => {
             match db.set(prompt.db_key, &answer) {
                 Err(_) => eprintln!("Failed writing value to prickle db"),
-                _ => {},
+                _ => {}
             };
             Some(answer)
-        },
+        }
         None => None,
     }
 }
