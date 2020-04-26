@@ -6,7 +6,8 @@ BitBucket Server Cli
 ![Crates.io](https://img.shields.io/crates/l/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/v/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)
-![Maintenance](https://img.shields.io/badge/maintenance-experimental-blue.svg)
+![State](https://img.shields.io/badge/maintenance-working_but_experimental-blue.svg)
+![Maintenance](https://img.shields.io/maintenance/yes/2020)
 
 * [Install](#install)
 * [Run](#run)
