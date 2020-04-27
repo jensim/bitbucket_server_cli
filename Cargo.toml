@@ -27,6 +27,10 @@ indicatif = "0.14"
 pickledb = "0.4"
 dialoguer = "0.5"
 
+[dev-dependencies]
+tokio-test = "0.2"
+rand = "0.7"
+
 [badges]
 travis-ci = { repository = "jensim/bitbucket_server_cli", branch = "master" }
 maintenance = { status = "experimental" }

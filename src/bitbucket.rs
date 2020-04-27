@@ -65,10 +65,14 @@ impl Bitbucket {
 
 async fn fetch_all_projects(opts: BitBucketOpts) -> BitbucketResult<Vec<ProjDesc>> {
     let host = opts.server.clone().unwrap();
-    let url = format!("{}/rest/api/1.0/projects?limit=100000", host);
+    let url = fetch_all_projects_url(&host);
 
     let response: reqwest::Result<reqwest::Response> = bake_client(url, opts).send().await;
     Ok(extract_body::<AllProjects>(response, "projects".to_owned()).await?.values)
+}
+
+fn fetch_all_projects_url(host: &String) -> String {
+    format!("{}/rest/api/1.0/projects?limit=100000", host)
 }
 
 async fn extract_body<T>(response: reqwest::Result<reqwest::Response>, naming: String) -> BitbucketResult<T> where T: DeserializeOwned {
@@ -95,11 +99,14 @@ async fn extract_body<T>(response: reqwest::Result<reqwest::Response>, naming: S
 }
 
 async fn fetch_one(project_key: String, opts: BitBucketOpts) -> BitbucketResult<Vec<Repo>> {
-    let url = format!("{host}/rest/api/latest/projects/{key}/repos?limit=5000",
-                      host = opts.server.clone().unwrap().to_lowercase(),
-                      key = project_key.clone());
+    let url = fetch_one_url(&opts.server.clone().unwrap().to_lowercase(), &project_key);
     let result: reqwest::Result<reqwest::Response> = bake_client(url, opts).send().await;
     Ok(extract_body::<types::Projects>(result, format!("project {}", project_key)).await?.get_clone_links())
+}
+
+fn fetch_one_url(host: &String, project_key: &String) -> String {
+    format!("{host}/rest/api/latest/projects/{key}/repos?limit=5000",
+            host = host, key = project_key)
 }
 
 fn bake_client(url: String, opts: BitBucketOpts) -> RequestBuilder {
@@ -109,4 +116,69 @@ fn bake_client(url: String, opts: BitBucketOpts) -> RequestBuilder {
         (Some(u), Some(p)) => builder.basic_auth(u.clone(), Some(p.clone())),
         _ => builder,
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use rand::{Rng, thread_rng};
+    use rand::distributions::Alphanumeric;
+
+    use super::*;
+
+    fn random_string(len: usize) -> String {
+        thread_rng().sample_iter(&Alphanumeric)
+            .take(len).collect()
+    }
+
+    fn basic_opts() -> BitBucketOpts {
+        BitBucketOpts {
+            username: None,
+            password: None,
+            password_from_env: false,
+            concurrency: 1,
+            verbose: true,
+            server: Some(format!("http://{host}.p2/{path}",
+                                 host = format!("{}", random_string(12)),
+                                 path = format!("{}", random_string(12)))),
+        }
+    }
+
+    #[tokio::test]
+    async fn fetch_one_bad_host_is_dns_error() {
+        // given
+        let project_key = "KEY".to_owned();
+        let bit_bucket_opts = basic_opts();
+
+        // when
+        let result = fetch_one(project_key.clone(), bit_bucket_opts).await;
+
+        // then
+        match result {
+            Ok(_) => assert!(false, "This request was expected to fail."),
+            Err(e) => {
+                assert_eq!(e.msg,
+                           format!("Failed fetching project {} from bitbucket.", &project_key),
+                           "Unexpected error message. Was '{}'", e.msg);
+                assert!(e.cause.contains("ConnectError(\"dns error\""),
+                        format!("Was {}", e.cause))
+            }
+        }
+    }
+
+    #[tokio::test]
+    async fn fetch_one_bad_url_path_is_404() {
+        // given
+        let project_key = "KEY".to_owned();
+        let mut bit_bucket_opts = basic_opts();
+        bit_bucket_opts.server = Some("http://bitbucket.com/This_Will_Never_Work".to_owned());
+
+        // when
+        let result = fetch_one(project_key, bit_bucket_opts).await;
+
+        // then
+        match result {
+            Ok(_) => assert!(false, "This request was expected to fail."),
+            Err(e) => assert!(e.msg.contains(format!("status code: {}", 404).as_str()), "Response code should be 404."),
+        }
+    }
 }
