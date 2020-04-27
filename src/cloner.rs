@@ -23,7 +23,7 @@ impl Cloner {
         Cloner { opts }
     }
 
-    pub async fn clone(self) -> Result<()> {
+    pub async fn git_clone(self) -> Result<()> {
         let mut opts = self.opts;
 
         if opts.interactive {
@@ -70,5 +70,47 @@ impl Cloner {
         }
         Git { opts: opts.git_opts, repos }.git_going().await;
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::types::{BitBucketOpts, GitOpts};
+
+    use super::*;
+
+    #[test]
+    fn test_true() {
+        println!("test");
+        assert!(true, "Verify man")
+    }
+
+    #[tokio::test]
+    async fn cloner_integration_test() {
+        let opts = Opts {
+            interactive: false,
+            bitbucket_opts: BitBucketOpts {
+                server: Some("http://github.com".to_owned()),
+                verbose: true,
+                concurrency: 1,
+                password: Some("PA$$WoRD123#%&".to_owned()),
+                password_from_env: false,
+                username: Some("Admin".to_owned()),
+
+            },
+            git_opts: GitOpts {
+                clone_all: true,
+                project_keys: vec![],
+                reset_state: false,
+                concurrency: 1,
+                quiet: false,
+            },
+        };
+        match Cloner::new(opts).git_clone().await {
+            Ok(_) => assert!(false, "GitHub.com should never be available as a bitbucket server"),
+            Err(e) => {
+                println!("{}", e.msg)
+            }
+        }
     }
 }
