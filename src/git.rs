@@ -80,7 +80,7 @@ async fn git_clone(repo: &Repo) -> Result<()> {
     let path = Path::new(&string_path);
 
     let fail_suffix = "failed git clone";
-    match exec(&*format!("git clone {}", repo.git), path).await {
+    match exec(&*format!("git clone {} {}", repo.git, repo.name), path).await {
         Ok(o) if o.status.success() => Ok(()),
         Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(fail_suffix, repo, o.stdout, o.stderr)),
         Err(e) => Err(generate_repo_err(fail_suffix, repo, e.msg)),
@@ -158,4 +158,47 @@ fn dir_exists(repo: &Repo) -> bool {
         Ok(_) => true,
         _ => false,
     };
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn repo() -> Repo {
+        Repo {
+            project_key: String::from("target"),
+            git: String::from("git@github.com:jensim/bitbucket_server_cli.git"),
+            name: String::from("test_repo"),
+        }
+    }
+
+    fn clean() {
+        match std::fs::remove_dir_all(Path::new("./target/test_repo")) {
+            Ok(_) => {},
+            Err(_) => {},
+        }
+    }
+
+    const PATH: &str = "./target/test_repo";
+
+    #[tokio::test]
+    async fn test_git_clone_and_update() {
+        clean();
+        match std::fs::read_dir(PATH) {
+            Ok(_) => assert!(false, "Failed cleaning away dir."),
+            Err(_e) => {},
+        }
+
+        git_clone(&repo()).await.unwrap();
+        match std::fs::read_dir(PATH) {
+            Ok(_) => {},
+            Err(e) => assert!(false, "Failed. {:?}", e),
+        }
+
+        git_update(&repo()).await.unwrap();
+        match std::fs::read_dir(PATH) {
+            Ok(_) => {},
+            Err(e) => assert!(false, "Failed. {:?}", e),
+        }
+    }
 }
