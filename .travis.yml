@@ -16,6 +16,11 @@ matrix:
 #      os: osx
 
 before_install:
+# Debugging
+  - mkdir -p ./target/release
+  - echo cat > ./target/release/test_file.txt
+  - tar -cfz "${TRAVIS_BUILD_DIR}test_archive-${TRAVIS_OS_NAME}.tar.gz" "./target/release/test_file.txt"
+
   - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in ./encrypted/id_rsa.enc -out ./encrypted/id_rsa -d
   - openssl aes-256-cbc -K $encrypted_b2704e9bbe4d_key -iv $encrypted_b2704e9bbe4d_iv -in ./encrypted/id_rsa.pub.enc -out ./encrypted/id_rsa.pub -d
   - chmod 0600 ./encrypted/id_rsa{,.pub}
