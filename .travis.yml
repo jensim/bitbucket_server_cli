@@ -25,7 +25,6 @@ install: cargo build --release --verbose
 
 script:
   - cargo test --release --workspace --verbose
-  - rm -rf target/test_repo
 
 before_deploy:
   - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "target/release/bitbucket_server_cli"

@@ -164,39 +164,33 @@ fn dir_exists(repo: &Repo) -> bool {
 mod tests {
     use super::*;
 
-    fn repo() -> Repo {
+    fn repo(project_key: &str, name: &str) -> Repo {
         Repo {
-            project_key: String::from("target"),
+            project_key: String::from(project_key),
             git: String::from("https://github.com/jensim/bitbucket_server_cli.git"),
-            name: String::from("test_repo"),
+            name: String::from(name),
         }
     }
-
-    fn clean() {
-        match std::fs::remove_dir_all(Path::new("./target/test_repo")) {
-            Ok(_) => {},
-            Err(_) => {},
-        }
-    }
-
-    const PATH: &str = "./target/test_repo";
 
     #[tokio::test]
     async fn test_git_clone_and_update() {
-        clean();
-        match std::fs::read_dir(PATH) {
+        let path = "tmp/test_repo";
+        let repo = repo("tmp", "test_repo");
+        std::fs::remove_dir_all(Path::new(path)).unwrap_or(());
+        match std::fs::read_dir(path) {
             Ok(_) => assert!(false, "Failed cleaning away dir."),
             Err(_e) => {},
         }
+        std::fs::create_dir("tmp").unwrap_or(());
 
-        git_clone(&repo()).await.unwrap();
-        match std::fs::read_dir(PATH) {
+        git_clone(&repo).await.unwrap();
+        match std::fs::read_dir(path) {
             Ok(_) => {},
             Err(e) => assert!(false, "Failed. {:?}", e),
         }
 
-        git_update(&repo()).await.unwrap();
-        match std::fs::read_dir(PATH) {
+        git_update(&repo).await.unwrap();
+        match std::fs::read_dir(path) {
             Ok(_) => {},
             Err(e) => assert!(false, "Failed. {:?}", e),
         }
