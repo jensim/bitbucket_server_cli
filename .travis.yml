@@ -28,14 +28,14 @@ script:
 
 before_deploy:
   - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "target/release/bitbucket_server_cli"
-  - export RELEASE_BODY=$(shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz")
+  - shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz"
 
 deploy:
   provider: releases
   api_key: ${GH_TOKEN}
   file: bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
   skip_cleanup: true
-  body: ${RELEASE_BODY}
+  body: $(shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz")
   overwrite: true
   draft: true
   file_glob: true
