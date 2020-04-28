@@ -2,7 +2,7 @@
 mod tests {
     use bitbucket_server_cli::{
         cloner::Cloner,
-        types::{BitBucketOpts, GitOpts, Opts},
+        types::{BitBucketOpts, CloneType, GitOpts, Opts},
     };
 
     #[tokio::test]
@@ -17,6 +17,7 @@ mod tests {
                 concurrency: 5,
                 verbose: true,
                 password_from_env: false,
+                clone_type: CloneType::HTTP,
             },
             git_opts: GitOpts {
                 clone_all: true,

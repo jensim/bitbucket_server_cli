@@ -100,8 +100,10 @@ async fn extract_body<T>(response: reqwest::Result<reqwest::Response>, naming: S
 
 async fn fetch_one(project_key: String, opts: BitBucketOpts) -> BitbucketResult<Vec<Repo>> {
     let url = fetch_one_url(&opts.server.clone().unwrap().to_lowercase(), &project_key);
+    let clone_type = opts.clone_type.clone();
     let result: reqwest::Result<reqwest::Response> = bake_client(url, opts).send().await;
-    Ok(extract_body::<types::Projects>(result, format!("project {}", project_key)).await?.get_clone_links())
+    Ok(extract_body::<types::Projects>(result, format!("project {}", project_key)).await?
+        .get_clone_links(clone_type))
 }
 
 fn fetch_one_url(host: &String, project_key: &String) -> String {
@@ -123,6 +125,8 @@ mod tests {
     use rand::{Rng, thread_rng};
     use rand::distributions::Alphanumeric;
 
+    use crate::types::CloneType;
+
     use super::*;
 
     fn random_string(len: usize) -> String {
@@ -140,6 +144,7 @@ mod tests {
             server: Some(format!("http://{host}.p2/{path}",
                                  host = format!("{}", random_string(12)),
                                  path = format!("{}", random_string(12)))),
+            clone_type: CloneType::HTTP,
         }
     }
 

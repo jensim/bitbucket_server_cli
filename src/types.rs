@@ -1,3 +1,4 @@
+use clap::arg_enum;
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
@@ -25,6 +26,8 @@ pub struct BitBucketOpts {
     pub verbose: bool,
     #[structopt(short = "W", long = "env_password", name = "bitbucket_password_from_env", help = "Try get password from env variable BITBUCKET_PASSWORD.\nTry it out without showing your password:\nIFS= read -rs BITBUCKET_PASSWORD < /dev/tty  && export BITBUCKET_PASSWORD\n")]
     pub password_from_env: bool,
+    #[structopt(long = "clone_type", name = "clone_type", possible_values = & CloneType::variants(), case_insensitive = true, default_value = "ssh")]
+    pub clone_type: CloneType,
 }
 
 #[derive(StructOpt, Clone, Debug)]
@@ -40,6 +43,13 @@ pub struct GitOpts {
     #[structopt(short = "Q", long = "git_quiet", name = "git_quiet", help = "Suppress warnings from failed git actions.")]
     pub quiet: bool,
 }
+arg_enum! {
+    #[derive(Clone, Debug)]
+    pub enum CloneType {
+        SSH,
+        HTTP
+    }
+}
 
 #[derive(Deserialize, Debug)]
 pub struct AllProjects {
@@ -52,11 +62,15 @@ pub struct Projects {
 }
 
 impl Projects {
-    pub fn get_clone_links(&self) -> Vec<Repo> {
+    pub fn get_clone_links(&self, clone_type: CloneType) -> Vec<Repo> {
         let mut links: Vec<Repo> = Vec::new();
+        let clone_type: &str = match clone_type {
+            CloneType::HTTP => "http",
+            CloneType::SSH => "ssh",
+        };
         for value in &self.values {
             for clone_link in &value.links.clone {
-                if value.state.trim() == "AVAILABLE" && value.scm_id.trim() == "git" && clone_link.name.trim() == "http" {
+                if value.state.trim() == "AVAILABLE" && value.scm_id.trim() == "git" && clone_link.name.trim() == clone_type {
                     links.push(Repo {
                         project_key: value.project.key.to_lowercase(),
                         git: clone_link.href.clone(),

@@ -75,7 +75,7 @@ impl Cloner {
 
 #[cfg(test)]
 mod tests {
-    use crate::types::{BitBucketOpts, GitOpts};
+    use crate::types::{BitBucketOpts, CloneType, GitOpts};
 
     use super::*;
 
@@ -91,7 +91,7 @@ mod tests {
                 password: Some("PA$$WoRD123#%&".to_owned()),
                 password_from_env: false,
                 username: Some("Admin".to_owned()),
-
+                clone_type: CloneType::HTTP,
             },
             git_opts: GitOpts {
                 clone_all: true,

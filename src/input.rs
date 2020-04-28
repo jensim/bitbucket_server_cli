@@ -45,6 +45,7 @@ pub fn opts(opts: &Opts) -> Opts {
             concurrency: opts.bitbucket_opts.concurrency,
             verbose: opts.bitbucket_opts.verbose,
             password_from_env: opts.bitbucket_opts.password_from_env,
+            clone_type: opts.bitbucket_opts.clone_type.clone(),
         },
         git_opts: GitOpts {
             reset_state: opts.git_opts.reset_state,
