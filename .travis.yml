@@ -38,3 +38,6 @@ deploy:
   overwrite: true
   draft: true
   file_glob: true
+  on:
+    branch: master
+    tags: false
