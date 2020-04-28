@@ -167,7 +167,7 @@ mod tests {
     fn repo() -> Repo {
         Repo {
             project_key: String::from("target"),
-            git: String::from("git@github.com:jensim/bitbucket_server_cli.git"),
+            git: String::from("https://github.com/jensim/bitbucket_server_cli.git"),
             name: String::from("test_repo"),
         }
     }
