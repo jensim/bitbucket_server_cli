@@ -16,10 +16,13 @@ matrix:
     - name: "Linux Build"
       os: linux
 
+before_install:
+  - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in ./encrypted/id_rsa.enc -out ${HOME}/.ssh/id_rsa -d
+
 before_deploy:
   - cargo build --release
   - cd target/release
-  - tar -czf bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz bitbucket_server_cli
+  - tar -cfz bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz $( ls bitbucket_server_cli{,.exe} 2>/dev/null )
   - export RELEASE_BODY=$(shasum -a 256 bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz)
 
 deploy:
