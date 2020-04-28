@@ -19,6 +19,7 @@ matrix:
 before_install:
   - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in ./encrypted/id_rsa.enc -out ${HOME}/.ssh/id_rsa -d
   - openssl aes-256-cbc -K $encrypted_b2704e9bbe4d_key -iv $encrypted_b2704e9bbe4d_iv -in ./encrypted/id_rsa.pub.enc -out ${HOME}/.ssh/id_rsa.pub -d
+  - chmod -R 0600 ${HOME}/.ssh
 
 before_deploy:
   - cargo build --release
