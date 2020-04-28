@@ -22,8 +22,11 @@ before_install:
   - chmod 0600 ./encrypted/id_rsa{,.pub}
   - mv ./encrypted/id_rsa{,.pub} ${HOME}/.ssh/
 
+install: cargo build --release --verbose
+
+script: cargo test --release --workspace --verbose
+
 before_deploy:
-  - cargo build --release
   - cd target/release
   - tar -cfz bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz $( ls bitbucket_server_cli{,.exe} 2>/dev/null )
   - export RELEASE_BODY=$(shasum -a 256 bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz)
