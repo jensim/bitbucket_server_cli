@@ -12,8 +12,8 @@ matrix:
   include:
     - name: "Linux Build"
       os: linux
-#    - name: "MacOS Build"
-#      os: osx
+    - name: "MacOS Build"
+      os: osx
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in encrypted/id_rsa.enc -out encrypted/id_rsa -d
@@ -23,7 +23,9 @@ before_install:
 
 install: cargo build --release --verbose
 
-script: cargo test --release --workspace --verbose
+script:
+  - cargo test --release --workspace --verbose
+  - rm -rf target/test_repo
 
 before_deploy:
   - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "target/release/bitbucket_server_cli"
