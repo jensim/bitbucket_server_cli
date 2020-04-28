@@ -27,9 +27,9 @@ install: cargo build --release --verbose
 script: cargo test --release --workspace --verbose
 
 before_deploy:
-  - ls -lah target/release/
-  - tar -cfz target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz $( ls target/release/bitbucket_server_cli{,.exe} 2>/dev/null )
-  - export RELEASE_BODY=$(shasum -a 256 target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz)
+  - "ls -lah target/release/bitbucket_server_cli"
+  - "tar -cfz target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz target/release/bitbucket_server_cli"
+  - "export RELEASE_BODY=$(shasum -a 256 target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz)"
 
 deploy:
   provider: releases
