@@ -32,7 +32,7 @@ before_deploy:
 deploy:
   provider: releases
   api_key: ${GH_TOKEN}
-  file: bitbucket_server_cli-*.tar.gz
+  file: bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
   skip_cleanup: true
   body: ${RELEASE_BODY}
   overwrite: true
