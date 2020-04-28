@@ -56,11 +56,11 @@ impl Projects {
         let mut links: Vec<Repo> = Vec::new();
         for value in &self.values {
             for clone_link in &value.links.clone {
-                if value.state.trim() == "AVAILABLE" && value.scm_id.trim() == "git" && clone_link.name.trim() == "ssh" {
+                if value.state.trim() == "AVAILABLE" && value.scm_id.trim() == "git" && clone_link.name.trim() == "http" {
                     links.push(Repo {
                         project_key: value.project.key.to_lowercase(),
                         git: clone_link.href.clone(),
-                        name: value.slug.to_lowercase()
+                        name: value.slug.to_lowercase(),
                     });
                 }
             }
