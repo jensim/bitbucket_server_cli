@@ -30,10 +30,10 @@ matrix:
 
 
 before_install:
-  - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in encrypted/id_rsa.enc -out encrypted/id_rsa -d
-  - openssl aes-256-cbc -K $encrypted_b2704e9bbe4d_key -iv $encrypted_b2704e9bbe4d_iv -in encrypted/id_rsa.pub.enc -out encrypted/id_rsa.pub -d
-  - chmod 0600 encrypted/id_rsa{,.pub}
-  - mv encrypted/id_rsa{,.pub} ${HOME}/.ssh/
+  - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in travis_encrypted/id_rsa.enc -out travis_encrypted/id_rsa -d
+  - openssl aes-256-cbc -K $encrypted_b2704e9bbe4d_key -iv $encrypted_b2704e9bbe4d_iv -in travis_encrypted/id_rsa.pub.enc -out travis_encrypted/id_rsa.pub -d
+  - chmod 0600 travis_encrypted/id_rsa{,.pub}
+  - mv travis_encrypted/id_rsa{,.pub} ${HOME}/.ssh/
 
 install: cargo build --release --verbose
 
