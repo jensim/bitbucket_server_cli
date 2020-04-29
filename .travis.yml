@@ -48,7 +48,7 @@ before_install:
 install: cargo build --release --verbose
 
 script:
-  - cargo test --release --verbose
+  - cargo test --release --verbose --lib
 
 before_deploy:
   - pushd target/release

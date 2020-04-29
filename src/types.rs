@@ -1,4 +1,5 @@
 use clap::arg_enum;
+use generic_error::{GenericError, Result};
 use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
@@ -130,9 +131,9 @@ pub struct Projects {
 }
 
 impl Projects {
-    pub fn get_clone_links(&self, clone_type: CloneType) -> Vec<Repo> {
+    pub fn get_clone_links(&self, opts: &BitBucketOpts) -> Vec<Repo> {
         let mut links: Vec<Repo> = Vec::new();
-        let clone_type: &str = match clone_type {
+        let clone_type: &str = match opts.clone_type {
             CloneType::HTTP => "http",
             CloneType::SSH => "ssh",
         };
@@ -142,15 +143,48 @@ impl Projects {
                     && value.scm_id.trim() == "git"
                     && clone_link.name.trim() == clone_type
                 {
+                    let git = if clone_type == "http"
+                        && opts.password.is_some()
+                        && opts.username.is_some()
+                    {
+                        if let Ok(a) = add_user_to_url(
+                            &clone_link.href,
+                            opts.username.clone().unwrap(),
+                            opts.password.clone().unwrap(),
+                        ) {
+                            a
+                        } else {
+                            continue;
+                        }
+                    } else {
+                        clone_link.href.clone()
+                    };
                     links.push(Repo {
                         project_key: value.project.key.to_lowercase(),
-                        git: clone_link.href.clone(),
                         name: value.slug.to_lowercase(),
+                        git,
                     });
                 }
             }
         }
         links
+    }
+}
+
+fn add_user_to_url(url: &str, user: String, pass: String) -> Result<String> {
+    if url.contains("://") {
+        let mut url_parts: Vec<String> =
+            url.split("://").map(move |s: &str| s.to_owned()).collect();
+        url_parts.insert(1, "://".to_owned());
+        url_parts.insert(2, user);
+        url_parts.insert(3, ":".to_owned());
+        url_parts.insert(4, pass);
+        url_parts.insert(5, "@".to_owned());
+        Ok(url_parts.join(""))
+    } else {
+        Err(GenericError {
+            msg: format!("URL {} didn't contain '://'", url),
+        })
     }
 }
 
@@ -192,4 +226,80 @@ pub struct GitResult {
     pub project_key: String,
     pub success: String,
     pub error: Option<String>,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_add_user_to_url() {
+        let added = add_user_to_url(
+            &"http://localhost:7990/something.git".to_owned(),
+            "admin".to_owned(),
+            "password123".to_owned(),
+        )
+        .unwrap();
+        assert_eq!(
+            "http://admin:password123@localhost:7990/something.git",
+            added.as_str(),
+            "Url '{}' didn't match expectation.",
+            added,
+        )
+    }
+
+    #[test]
+    fn test_http_with_user_and_password() {
+        let repo_str = "https://localhost:7990/repo.git";
+        let prjs = from(repo_str, CloneType::HTTP);
+        let opts = BitBucketOpts {
+            server: None,
+            username: Some("admin".to_owned()),
+            password: Some("password123".to_owned()),
+            concurrency: 0,
+            verbose: false,
+            password_from_env: false,
+            clone_type: CloneType::HTTP,
+        };
+        let vec1 = prjs.get_clone_links(&opts);
+        assert_eq!(vec1.len(), 1);
+        assert_eq!(
+            vec1[0].git,
+            "https://admin:password123@localhost:7990/repo.git"
+        );
+    }
+
+    #[test]
+    fn test_http_without_user_and_password() {
+        let repo_str = "https://localhost:7990/repo.git";
+        let prjs = from(repo_str, CloneType::HTTP);
+        let opts = BitBucketOpts {
+            server: None,
+            username: None,
+            password: None,
+            concurrency: 0,
+            verbose: false,
+            password_from_env: false,
+            clone_type: CloneType::HTTP,
+        };
+        let vec1 = prjs.get_clone_links(&opts);
+        assert_eq!(vec1.len(), 1);
+        assert_eq!(vec1[0].git, repo_str);
+    }
+
+    fn from(repo_str: &str, clone_type: CloneType) -> Projects {
+        let prj = Project {
+            slug: "asdf".to_string(),
+            scm_id: "git".to_string(),
+            state: "AVAILABLE".to_string(),
+            links: Links {
+                clone: vec![CloneLink {
+                    name: format!("{}", clone_type).to_lowercase(),
+                    href: repo_str.to_owned(),
+                }],
+            },
+            project: ProjDesc { key: String::new() },
+        };
+        Projects { values: vec![prj] }
+    }
 }

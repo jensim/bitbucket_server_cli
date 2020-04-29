@@ -63,7 +63,7 @@ async fn fetch_all_projects(opts: BitBucketOpts) -> BitbucketResult<Vec<ProjDesc
     let host = opts.server.clone().unwrap();
     let url = fetch_all_projects_url(&host);
 
-    let response: reqwest::Result<reqwest::Response> = bake_client(url, opts).send().await;
+    let response: reqwest::Result<reqwest::Response> = bake_client(url, &opts).send().await;
     Ok(extract_body::<AllProjects>(response, "projects".to_owned())
         .await?
         .values)
@@ -111,12 +111,11 @@ where
 
 async fn fetch_one(project_key: String, opts: BitBucketOpts) -> BitbucketResult<Vec<Repo>> {
     let url = fetch_one_url(&opts.server.clone().unwrap().to_lowercase(), &project_key);
-    let clone_type = opts.clone_type.clone();
-    let result: reqwest::Result<reqwest::Response> = bake_client(url, opts).send().await;
+    let result: reqwest::Result<reqwest::Response> = bake_client(url, &opts).send().await;
     Ok(
         extract_body::<types::Projects>(result, format!("project {}", project_key))
             .await?
-            .get_clone_links(clone_type),
+            .get_clone_links(&opts),
     )
 }
 
@@ -128,7 +127,7 @@ fn fetch_one_url(host: &str, project_key: &str) -> String {
     )
 }
 
-fn bake_client(url: String, opts: BitBucketOpts) -> RequestBuilder {
+fn bake_client(url: String, opts: &BitBucketOpts) -> RequestBuilder {
     let builder: RequestBuilder = ReqwestClient::new()
         .get(url.trim())
         .header(ACCEPT, "application/json");
