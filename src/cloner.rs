@@ -3,15 +3,8 @@ use generic_error::Result;
 use crate::{
     bitbucket::Bitbucket,
     git::Git,
-    input::{
-        self,
-        password_from_env,
-        select_projects,
-    },
-    types::{
-        Opts,
-        Repo,
-    },
+    input::{self, password_from_env, select_projects},
+    types::{Opts, Repo},
 };
 
 pub struct Cloner {
@@ -47,7 +40,9 @@ impl Cloner {
                 }
             }
         }
-        let bb = Bitbucket { opts: opts.bitbucket_opts.clone() };
+        let bb = Bitbucket {
+            opts: opts.bitbucket_opts.clone(),
+        };
         let mut repos: Vec<Repo> = match bb.fetch_all().await {
             Ok(r) => r,
             Err(e) => {
@@ -68,7 +63,13 @@ impl Cloner {
             }
             repos = tmp_vec;
         }
-        Git { opts: opts.git_opts, repos }.git_going().await;
+        Git {
+            opts: opts.git_opts,
+            repos,
+        }
+        .git_going()
+        .await;
+
         Ok(())
     }
 }
@@ -102,10 +103,11 @@ mod tests {
             },
         };
         match Cloner::new(opts).git_clone().await {
-            Ok(_) => assert!(false, "GitHub.com should never be available as a bitbucket server"),
-            Err(e) => {
-                println!("{}", e.msg)
-            }
+            Ok(_) => assert!(
+                false,
+                "GitHub.com should never be available as a bitbucket server"
+            ),
+            Err(e) => println!("{}", e.msg),
         }
     }
 }

@@ -1,9 +1,6 @@
 use structopt::StructOpt;
 
-use bitbucket_server_cli::{
-    cloner::Cloner,
-    types::Opts,
-};
+use bitbucket_server_cli::{cloner::Cloner, types::Opts};
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {

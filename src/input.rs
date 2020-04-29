@@ -1,16 +1,13 @@
 use std::result::Result as StdResult;
 
-use dialoguer::{Checkboxes, Confirmation, Input, PasswordInput, theme::ColorfulTheme};
+use dialoguer::{theme::ColorfulTheme, Checkboxes, Confirmation, Input, PasswordInput};
 use generic_error::{GenericError, Result};
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
 use crate::prompts::{
-    Prompt,
-    PROMPT_BB_PASSWORD,
-    PROMPT_BB_PROJECT_ALL,
-    PROMPT_BB_PROJECT_SOME,
-    PROMPT_BB_SERVER,
-    PROMPT_BB_USERNAME};
+    Prompt, PROMPT_BB_PASSWORD, PROMPT_BB_PROJECT_ALL, PROMPT_BB_PROJECT_SOME, PROMPT_BB_SERVER,
+    PROMPT_BB_USERNAME,
+};
 use crate::types::{BitBucketOpts, GitOpts, Opts, Repo};
 
 const PROP_FILE: &str = ".bitbucket_server_cli.db";
@@ -18,24 +15,20 @@ const PROP_FILE: &str = ".bitbucket_server_cli.db";
 pub fn opts(opts: &Opts) -> Opts {
     let bit_bucket_server: Option<String> = match opts.bitbucket_opts.server.clone() {
         None => get_with_default(&PROMPT_BB_SERVER, None, false),
-        Some(s) => Some(s)
+        Some(s) => Some(s),
     };
     let bit_bucket_username: Option<String> = match opts.bitbucket_opts.username.clone() {
         None => get_with_default(&PROMPT_BB_USERNAME, None, true),
-        Some(s) => Some(s)
+        Some(s) => Some(s),
     };
     let bit_bucket_password: Option<String> = match bit_bucket_username {
         None => None,
-        Some(_) => match opts.bitbucket_opts.password.clone() {
-            None => if opts.bitbucket_opts.password_from_env {
-                None
-            } else {
-                get_password(&PROMPT_BB_PASSWORD)
-            },
-            Some(s) => Some(s)
-        }
+        Some(_) if opts.bitbucket_opts.password_from_env => None,
+        Some(_) if opts.bitbucket_opts.password.is_none() => get_password(&PROMPT_BB_PASSWORD),
+        _ => None,
     };
-    let bit_bucket_project_all: bool = opts.git_opts.clone_all || get_bool(&PROMPT_BB_PROJECT_ALL, false);
+    let bit_bucket_project_all: bool =
+        opts.git_opts.clone_all || get_bool(&PROMPT_BB_PROJECT_ALL, false);
 
     Opts {
         bitbucket_opts: BitBucketOpts {
@@ -67,16 +60,21 @@ pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
     }
     let mut db = get_db();
     let previous: Vec<String> = db.get(PROMPT_BB_PROJECT_SOME.db_key).unwrap_or(Vec::new());
-    let pre_selected: Vec<bool> = project_keys.iter().map(|key| previous.contains(key)).collect();
+    let pre_selected: Vec<bool> = project_keys
+        .iter()
+        .map(|key| previous.contains(key))
+        .collect();
     let mut answer: Vec<usize> = Vec::new();
     while answer.is_empty() {
-        answer = Checkboxes::new().items(&project_keys)
+        answer = Checkboxes::new()
+            .items(&project_keys)
             .with_prompt(&PROMPT_BB_PROJECT_SOME.prompt_str)
             .defaults(&pre_selected[..])
-            .interact().unwrap_or_else(|_e| {
-            eprintln!("Failed handling project key selection");
-            std::process::exit(1);
-        });
+            .interact()
+            .unwrap_or_else(|_e| {
+                eprintln!("Failed handling project key selection");
+                std::process::exit(1);
+            });
     }
     let mut filtered: Vec<String> = Vec::new();
     for i in answer {
@@ -93,13 +91,23 @@ pub fn password_from_env() -> Result<String> {
     let key = "BITBUCKET_PASSWORD";
     match std::env::var(key) {
         Ok(val) => Ok(val),
-        Err(e) => Err(GenericError { msg: format!("{} is not defined in the environment. {:?}", key, e) })
+        Err(e) => Err(GenericError {
+            msg: format!("{} is not defined in the environment. {:?}", key, e),
+        }),
     }
 }
 
 fn get_db() -> PickleDb {
-    PickleDb::load(PROP_FILE, PickleDbDumpPolicy::AutoDump, SerializationMethod::Yaml)
-        .unwrap_or(PickleDb::new(PROP_FILE, PickleDbDumpPolicy::AutoDump, SerializationMethod::Yaml))
+    PickleDb::load(
+        db_path: PROP_FILE,
+        dump_policy: PickleDbDumpPolicy::AutoDump,
+        serialization_method: SerializationMethod::Yaml,
+    )
+    .unwrap_or(PickleDb::new(
+        db_path: PROP_FILE,
+        dump_policy: PickleDbDumpPolicy::AutoDump,
+        serialization_method: SerializationMethod::Yaml,
+    ))
 }
 
 fn get_password(prompt: &Prompt) -> Option<String> {
@@ -117,7 +125,8 @@ fn get_bool(prompt: &Prompt, default: bool) -> bool {
         .with_text(prompt.prompt_str)
         .default(read_val)
         .show_default(true)
-        .interact().unwrap_or(default);
+        .interact()
+        .unwrap_or(default);
     match db.set(prompt.db_key, &prompt_val) {
         Err(_) => eprintln!("Failed writing value to prickle db"),
         _ => {}
@@ -129,10 +138,21 @@ fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool)
     let mut db = get_db();
     let read_val: Option<String> = db.get(prompt.db_key).or(default);
     let ask: Option<String> = match read_val.clone() {
-        Some(s) => resolve(Input::new().with_prompt(prompt.prompt_str)
-            .allow_empty(allow_empty).default(s).show_default(true).interact()),
-        None => resolve(Input::new().with_prompt(prompt.prompt_str)
-            .allow_empty(allow_empty).show_default(false).interact())
+        Some(s) => resolve(
+            Input::new()
+                .with_prompt(prompt.prompt_str)
+                .allow_empty(allow_empty)
+                .default(s)
+                .show_default(true)
+                .interact(),
+        ),
+        None => resolve(
+            Input::new()
+                .with_prompt(prompt.prompt_str)
+                .allow_empty(allow_empty)
+                .show_default(false)
+                .interact(),
+        ),
     };
     match ask {
         Some(answer) => {
@@ -148,14 +168,8 @@ fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool)
 
 fn resolve(result: StdResult<String, std::io::Error>) -> Option<String> {
     match result {
-        Ok(s) => if s.is_empty() {
-            None
-        } else {
-            Some(s)
-        },
-        _ => {
-            None
-        }
+        Ok(s) if !s.is_empty() => Some(s),
+        _ => None,
     }
 }
 

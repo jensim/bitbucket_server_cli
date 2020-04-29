@@ -3,10 +3,10 @@ extern crate reqwest;
 #[macro_use]
 extern crate serde;
 
-pub mod types;
 pub mod cloner;
+pub mod types;
 
-mod prompts;
 mod bitbucket;
 mod git;
 mod input;
+mod prompts;
