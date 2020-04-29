@@ -1,7 +1,12 @@
 #!/bin/sh
 set -e
+set -x
 
 hookDir=$(dirname "$0")
+WORKDIR=$(git rev-parse --show-toplevel)
+
+cd $WORKDIR
+
 cargo fmt --all -- --check
 cargo clippy
-cargo test --verbose
+cargo test --workspace --verbose
