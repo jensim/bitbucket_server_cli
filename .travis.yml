@@ -23,7 +23,7 @@ matrix:
         - rustup component add rustfmt-preview
         - rustup component add clippy-preview
       script:
-        - cargo fmt --all -- --check
+        - cargo fmt --workspace -- --check
         - cargo clippy
       before_deploy: skip
       deploy: []
@@ -38,7 +38,7 @@ before_install:
 install: cargo build --release --verbose
 
 script:
-  - cargo test --release --workspace --verbose
+  - cargo test --release --verbose
 
 before_deploy:
   - pushd target/release
