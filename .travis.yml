@@ -36,9 +36,9 @@ deploy:
   provider: releases
   api_key: ${GH_TOKEN}
   file: target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
-  name: Draft-${TRAVIS_COMMIT}
+  name: Draft-travis-${TRAVIS_BUILD_NUMBER}
+  body: "[Travis build ${TRAVIS_BUILD_NUMBER}](https://travis-ci.org/github/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_NUMBER})"
   skip_cleanup: true
-  overwrite: true
   draft: true
   file_glob: true
   on:
