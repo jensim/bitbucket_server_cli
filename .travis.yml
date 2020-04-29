@@ -27,14 +27,16 @@ script:
   - cargo test --release --workspace --verbose
 
 before_deploy:
-  - cd target/release
+  - pushd target/release
   - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "bitbucket_server_cli"
   - shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz"
+  - popd
 
 deploy:
   provider: releases
   api_key: ${GH_TOKEN}
   file: target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
+  name: Draft-${TRAVIS_COMMIT}
   skip_cleanup: true
   overwrite: true
   draft: true
