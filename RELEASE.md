@@ -6,20 +6,17 @@ cargo publish
 ```
 ## Brew
 [Good instructions!!](https://federicoterzi.com/blog/how-to-publish-your-rust-project-on-homebrew/)
-* Package the binary for upload:
-```bash
-rm -rf target/release
-cargo build --release
-cd target/release
-tar -czf bitbucket_server_cli-mac.tar.gz bitbucket_server_cli
-shasum -a 256 bitbucket_server_cli-mac.tar.gz
-```
-* [Draft new github release](https://github.com/jensim/bitbucket_server_cli/releases/new)
-  * Upload the archive bitbucket_server_cli-mac.tar.gz to the release
+* Travis will draft a release for us
+  * https://travis-ci.org/github/jensim/bitbucket_server_cli
+    * Checksum can be found in the end of the log for each of the builds
+      * Linux
+      * OSX
+  * Once successfull hit the publish button in GitHub GUI
+    * https://github.com/jensim/bitbucket_server_cli/releases
 * Clone https://github.com/jensim/homebrew-bitbucket_server_cli
   * Edit Formula/bitbucket_server_cli.rb (edit placeholders within <>)
   ```rb
-  url "https://github.com/jensim/bitbucket_server_cli/releases/download/<VERSION>/bitbucket_server_cli-mac.tar.gz"
+  url "https://github.com/jensim/bitbucket_server_cli/releases/download/<VERSION>/bitbucket_server_cli-osx.tar.gz"
   sha256 "<SHA_FROM_BEFORE>"
   version "<VERSION>"
   ```
@@ -33,3 +30,5 @@ shasum -a 256 bitbucket_server_cli-mac.tar.gz
   * Brew update
     * `brew update`
     * `brew info jensim/bitbucket_server_cli/bitbucket_server_cli`
+* Clone https://github.com/jensim/linuxbrew-bitbucket_server_cli
+  * Same as the homebrew one
