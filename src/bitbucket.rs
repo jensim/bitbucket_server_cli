@@ -69,7 +69,7 @@ async fn fetch_all_projects(opts: BitBucketOpts) -> BitbucketResult<Vec<ProjDesc
         .values)
 }
 
-fn fetch_all_projects_url(host: &String) -> String {
+fn fetch_all_projects_url(host: &str) -> String {
     format!("{}/rest/api/1.0/projects?limit=100000", host)
 }
 
@@ -120,7 +120,7 @@ async fn fetch_one(project_key: String, opts: BitBucketOpts) -> BitbucketResult<
     )
 }
 
-fn fetch_one_url(host: &String, project_key: &String) -> String {
+fn fetch_one_url(host: &str, project_key: &str) -> String {
     format!(
         "{host}/rest/api/latest/projects/{key}/repos?limit=5000",
         host = host,
@@ -132,10 +132,10 @@ fn bake_client(url: String, opts: BitBucketOpts) -> RequestBuilder {
     let builder: RequestBuilder = ReqwestClient::new()
         .get(url.trim())
         .header(ACCEPT, "application/json");
-    return match (&opts.username, &opts.password) {
+    match (&opts.username, &opts.password) {
         (Some(u), Some(p)) => builder.basic_auth(u.clone(), Some(p.clone())),
         _ => builder,
-    };
+    }
 }
 
 #[cfg(test)]

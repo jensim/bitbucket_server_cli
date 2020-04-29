@@ -17,8 +17,8 @@ pub struct Git {
 impl Git {
     pub async fn git_going(self) {
         println!("Started working {} repositories", self.repos.len());
-        let bar: ProgressBar = ProgressBar::new(self.repos.len() as u64);
-        bar.set_style(
+        let progress_bar: ProgressBar = ProgressBar::new(self.repos.len() as u64);
+        progress_bar.set_style(
             ProgressStyle::default_bar()
                 .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})")
                 .progress_chars("#>-"),
@@ -35,10 +35,10 @@ impl Git {
         });
         let clone_result = stream::iter(self.repos.iter().map(|repo| {
             let reset = self.opts.reset_state;
-            let bar = bar.clone();
+            let progress_bar = progress_bar.clone();
             async move {
                 let result = clone_or_update(&repo, reset).await;
-                bar.inc(1);
+                progress_bar.inc(1);
                 result
             }
         }))
@@ -46,12 +46,11 @@ impl Git {
         .collect::<Vec<Result<()>>>()
         .await;
 
-        bar.finish();
+        progress_bar.finish();
         let mut failed: Vec<String> = vec![];
         for result in clone_result {
-            match result {
-                Err(e) => failed.push(e.msg),
-                _ => {}
+            if let Err(e) = result {
+                failed.push(e.msg);
             }
         }
 
@@ -67,17 +66,14 @@ impl Git {
 }
 
 async fn clone_or_update(repo: &Repo, do_reset_state: bool) -> Result<()> {
-    match dir_exists(&repo) {
-        true => {
-            if do_reset_state {
-                git_reset(repo).await?;
-            }
-            git_update(&repo).await?;
-        }
-        false => {
-            git_clone(&repo).await?;
+    if dir_exists(&repo) {
+        if do_reset_state {
             git_reset(repo).await?;
         }
+        git_update(&repo).await?;
+    } else {
+        git_clone(&repo).await?;
+        git_reset(repo).await?;
     }
     Ok(())
 }
@@ -140,7 +136,7 @@ fn generate_repo_err_from_output(
         (Some(e), Some(o)) => format!("Err: '{}' Output: '{}'", e.trim(), o.trim()),
         (Some(e), None) => format!("Err: '{}'", e.trim()),
         (None, Some(o)) => format!("Output: '{}'", o.trim()),
-        (None, None) => format!("no output"),
+        (None, None) => "no output".to_string(),
     };
     generate_repo_err(suffix, repo, cause)
 }
@@ -166,17 +162,18 @@ fn generate_repo_err(suffix: &str, repo: &Repo, cause: String) -> GenericError {
 
 async fn exec(cmd: &str, path: &Path) -> Result<Output> {
     let is_win: bool = cfg!(target_os = "windows");
-    match is_win {
-        true => Ok(Command::new("cmd")
+    if is_win {
+        Ok(Command::new("cmd")
             .args(&["/C", cmd])
             .current_dir(path)
             .output()
-            .await?),
-        false => Ok(Command::new("sh")
+            .await?)
+    } else {
+        Ok(Command::new("sh")
             .args(&["-c", cmd])
             .current_dir(path)
             .output()
-            .await?),
+            .await?)
     }
 }
 
@@ -185,12 +182,12 @@ fn path(repo: &Repo) -> String {
 }
 
 fn dir_exists(repo: &Repo) -> bool {
-    return match std::fs::read_dir(Path::new(
+    match std::fs::read_dir(Path::new(
         &format!("./{}/{}", repo.project_key, repo.name)[..],
     )) {
         Ok(_) => true,
         _ => false,
-    };
+    }
 }
 
 #[cfg(test)]

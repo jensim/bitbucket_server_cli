@@ -150,7 +150,7 @@ impl Projects {
                 }
             }
         }
-        return links;
+        links
     }
 }
 

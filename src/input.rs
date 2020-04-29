@@ -51,7 +51,7 @@ pub fn opts(opts: &Opts) -> Opts {
     }
 }
 
-pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
+pub fn select_projects(repos: &[Repo]) -> Vec<String> {
     let mut project_keys: Vec<String> = Vec::new();
     for r in repos {
         if !project_keys.contains(&r.project_key) {
@@ -59,7 +59,9 @@ pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
         }
     }
     let mut db = get_db();
-    let previous: Vec<String> = db.get(PROMPT_BB_PROJECT_SOME.db_key).unwrap_or(Vec::new());
+    let previous: Vec<String> = db
+        .get(PROMPT_BB_PROJECT_SOME.db_key)
+        .unwrap_or_else(Vec::new);
     let pre_selected: Vec<bool> = project_keys
         .iter()
         .map(|key| previous.contains(key))
@@ -80,9 +82,11 @@ pub fn select_projects(repos: &Vec<Repo>) -> Vec<String> {
     for i in answer {
         filtered.push(project_keys[i].clone());
     }
-    match db.set(PROMPT_BB_PROJECT_SOME.db_key, &filtered) {
-        Err(_) => eprintln!("Failed writing value to prickle db"),
-        _ => {}
+    if db.set(PROMPT_BB_PROJECT_SOME.db_key, &filtered).is_err() {
+        eprintln!(
+            "Failed writing value {} to prickle db",
+            PROMPT_BB_PROJECT_SOME.db_key
+        );
     };
     filtered
 }
@@ -99,15 +103,17 @@ pub fn password_from_env() -> Result<String> {
 
 fn get_db() -> PickleDb {
     PickleDb::load(
-        db_path: PROP_FILE,
-        dump_policy: PickleDbDumpPolicy::AutoDump,
-        serialization_method: SerializationMethod::Yaml,
+        PROP_FILE,
+        PickleDbDumpPolicy::AutoDump,
+        SerializationMethod::Yaml,
     )
-    .unwrap_or(PickleDb::new(
-        db_path: PROP_FILE,
-        dump_policy: PickleDbDumpPolicy::AutoDump,
-        serialization_method: SerializationMethod::Yaml,
-    ))
+    .unwrap_or_else(|_| {
+        PickleDb::new(
+            PROP_FILE,
+            PickleDbDumpPolicy::AutoDump,
+            SerializationMethod::Yaml,
+        )
+    })
 }
 
 fn get_password(prompt: &Prompt) -> Option<String> {
@@ -127,9 +133,8 @@ fn get_bool(prompt: &Prompt, default: bool) -> bool {
         .show_default(true)
         .interact()
         .unwrap_or(default);
-    match db.set(prompt.db_key, &prompt_val) {
-        Err(_) => eprintln!("Failed writing value to prickle db"),
-        _ => {}
+    if db.set(prompt.db_key, &prompt_val).is_err() {
+        eprintln!("Failed writing value {} to prickle db", prompt.db_key)
     };
     prompt_val
 }
@@ -137,7 +142,7 @@ fn get_bool(prompt: &Prompt, default: bool) -> bool {
 fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool) -> Option<String> {
     let mut db = get_db();
     let read_val: Option<String> = db.get(prompt.db_key).or(default);
-    let ask: Option<String> = match read_val.clone() {
+    let ask: Option<String> = match read_val {
         Some(s) => resolve(
             Input::new()
                 .with_prompt(prompt.prompt_str)
@@ -156,10 +161,9 @@ fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool)
     };
     match ask {
         Some(answer) => {
-            match db.set(prompt.db_key, &answer) {
-                Err(_) => eprintln!("Failed writing value to prickle db"),
-                _ => {}
-            };
+            if db.set(prompt.db_key, &answer).is_err() {
+                eprintln!("Failed writing value {} to prickle db", prompt.db_key)
+            }
             Some(answer)
         }
         None => None,
