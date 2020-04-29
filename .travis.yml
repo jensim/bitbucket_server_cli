@@ -1,7 +1,6 @@
 if: tag IS blank
 
 language: rust
-rust: 1.43.0
 cache: cargo
 
 env:
