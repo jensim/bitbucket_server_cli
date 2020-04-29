@@ -38,11 +38,20 @@ bitbucket_server_cli -s https://example.com -A
 
 # 'Safe' password usage in batch mode. Depending on terminal, password might be seen in process description.
 IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
+export BITBUCKET_PASSWORD
 bitbucket_server_cli -s https://example.com -A -u jensim -w $BITBUCKET_PASSWORD
 
 # Run from source
 cargo run -- -I
 ```
+
+## git hooks
+I've set up a little pre-commit bash-script that will run `fmt`, `clippy` & `integration-tests`
+````shell script
+git config core.hooksPath .githooks
+# or
+./.githooks/pre-commit
+````
 
 ## Caveats
 - only tested on Mac OS X
