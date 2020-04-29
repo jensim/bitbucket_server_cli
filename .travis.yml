@@ -16,6 +16,7 @@ matrix:
       os: osx
     - name: "Linux Build"
       os: linux
+      dist: bionic
     - name: "Linting"
       os: linux
       before_install: skip
