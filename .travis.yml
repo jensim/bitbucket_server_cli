@@ -9,11 +9,26 @@ env:
     secure: P1r76h3zV3hHkRLTIWKmeRqAb3hOe9r51tqUzTweqUq7TCq89LXtoWlqff/zxtjFOuSZfPaJlRncLl+4bBCB/C+ksBRYyRS3joViazW9ik9aVc6NUmrJEgBvzCxNfeepLNt46VWFYZtAjiripNHdNYXzcB/4lWYCsitU0dcHww3zvhJy04lwl+qCUs+3kJqP3BP/Yt+VQjq5jQbyFVxtX3RyesWCkHf+5q4P+dRJCpUzt6sK9IWxIX/DbuSvN4ip+g0kiSH4udmUB5CsWCAfdwiyfEe4Yw6yeN8/4HphuWIioeqc4whEoClBxUQzYflOeaR76i7LYDLDj+t2EcZbE74SMUHQrfM28Hbi4uNBTVgKnuUyOsTNXDMcB8ALURI3gtQrpPSdfzmhrBqCeXyCpRgjgXwuTH59MSHhqqPYTxbz/gjTSPe0aijV3Hr2mPtS0NjLYP6wvfrArAs3umWke1gKfpvH+DtqP7aiU+mHhbrWP7FDIiKKeV0OGqVCOXHaj0hh9p4IAftuo4lKj1xX8oSsBI6YQOhF+bPOWdrI4KBYiCTFZY3aePx7XmRmjgO9yB8H560A6pkYeTCRaD36aPaxIKa5X15hjeNRXKpPJ/mXJ5gDl6DZnmagdZftIrqqcuejwB8I2Cqz8S5dlQ+o87/pljIdjz5WUNzG95wKL94=
 
 matrix:
+  fast_finish: true
+  allow_failures: []
   include:
-    - name: "Linux Build"
-      os: linux
     - name: "MacOS Build"
       os: osx
+    - name: "Linux Build"
+      os: linux
+    - name: "Linting"
+      os: linux
+      before_install: skip
+      install: skip
+      before_script:
+        - rustup component add rustfmt-preview
+        - rustup component add clippy-preview
+      script:
+        - cargo fmt --all -- --check
+        - cargo clippy
+      before_deploy: skip
+      deploy: []
+
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in encrypted/id_rsa.enc -out encrypted/id_rsa -d
