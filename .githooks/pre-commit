@@ -12,32 +12,5 @@ set +o allexport
 cargo fmt --all -- --check
 cargo clippy
 
-if [[ -z $BITBUCKET_USER ]]
-then
-  echo "BITBUCKET_USER not set"
-  exit 1
-fi
-if [[ -z $BITBUCKET_SERVER ]]
-then
-  echo "BITBUCKET_SERVER not set"
-  exit 1
-fi
-if [[ -z $BITBUCKET_PROJECT ]]
-then
-  echo "BITBUCKET_PROJECT not set"
-  exit 1
-fi
-if [[ -z $BITBUCKET_PASSWORD ]]
-then
-  echo "BITBUCKET_PASSWORD not set, please enter now:"
-  IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
-  export BITBUCKET_PASSWORD
-  if [[ -z $BITBUCKET_PASSWORD ]]
-  then
-    echo "BITBUCKET_PASSWORD not entered"
-    exit 1
-  fi
-fi
-
 cargo build
 cargo test --verbose
