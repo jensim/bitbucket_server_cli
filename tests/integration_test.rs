@@ -1,6 +1,6 @@
 extern crate bitbucket_server_cli;
 
-use generic_error::Result;
+use generic_error::{GenericError, Result};
 
 use bitbucket_server_cli::{
     cloner::Cloner,
@@ -10,7 +10,16 @@ use bitbucket_server_cli::{
 fn env(key: &str) -> Result<String> {
     match std::env::var(key) {
         Ok(r) => Ok(r),
-        _ => panic!(format!("{} was not set.", key)),
+        Err(_) => Err(GenericError {
+            msg: format!("{} was not set.", key),
+        }),
+    }
+}
+
+fn env_option(key: &str) -> Option<String> {
+    match env(key) {
+        Ok(v) => Some(v),
+        Err(_) => None,
     }
 }
 
@@ -19,8 +28,8 @@ fn opts() -> Result<Opts> {
         interactive: false,
         bitbucket_opts: BitBucketOpts {
             server: Some(env("BITBUCKET_SERVER")?),
-            username: Some(env("BITBUCKET_USER")?),
-            password: Some(env("BITBUCKET_PASSWORD")?),
+            username: env_option("BITBUCKET_USER"),
+            password: env_option("BITBUCKET_PASSWORD"),
             concurrency: 5,
             verbose: true,
             password_from_env: false,

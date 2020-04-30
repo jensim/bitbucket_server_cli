@@ -1,7 +1,13 @@
 if: tag IS blank
 
 language: rust
-cache: cargo
+cache:
+  directories:
+  - $HOME/.cargo
+  - $TRAVIS_BUILD_DIR/target
+
+before_cache:
+  - rm -rf $HOME/.cargo/registry
 
 env:
   global:
@@ -10,35 +16,35 @@ env:
 matrix:
   fast_finish: true
   allow_failures:
-    - "Audit"
+  - Audit
   include:
-    - name: "MacOS Build"
-      os: osx
-    - name: "Linux Build"
-      os: linux
-      dist: bionic
-    - name: "Linting"
-      os: linux
-      before_install: skip
-      install: skip
-      before_script:
-        - rustup component add rustfmt-preview
-        - rustup component add clippy-preview
-      script:
-        - cargo fmt --all -- --check
-        - cargo clippy
-      before_deploy: skip
-      deploy: []
-    - name: "Audit"
-      os: linux
-      before_install: skip
-      install: skip
-      before_script:
-        - cargo install cargo-audit
-      script:
-        - cargo audit
-      before_deploy: skip
-      deploy: []
+  - name: MacOS Build
+    os: osx
+  - name: Linux Build
+    os: linux
+    dist: bionic
+  - name: "Linting"
+    os: linux
+    before_install: skip
+    install: skip
+    before_script:
+      - rustup component add rustfmt-preview
+      - rustup component add clippy-preview
+    script:
+      - cargo fmt --all -- --check
+      - cargo clippy
+    before_deploy: skip
+    deploy: []
+  - name: Audit
+    os: linux
+    before_install: skip
+    install: skip
+    before_script:
+    - cargo install cargo-audit
+    script:
+    - cargo audit
+    before_deploy: skip
+    deploy: []
 
 before_install:
   - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv -in travis_encrypted/id_rsa.enc -out travis_encrypted/id_rsa -d
@@ -48,14 +54,13 @@ before_install:
 
 install: cargo build --release --verbose
 
-script:
-  - cargo test --release --verbose --lib
+script: cargo test --release --verbose --lib
 
 before_deploy:
-  - pushd target/release
-  - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "bitbucket_server_cli"
-  - shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz"
-  - popd
+- pushd target/release
+- tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "bitbucket_server_cli"
+- shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz"
+- popd
 
 deploy:
   provider: releases

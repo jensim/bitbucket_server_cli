@@ -39,4 +39,5 @@ then
   fi
 fi
 
+cargo build
 cargo test --verbose
