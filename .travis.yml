@@ -70,7 +70,7 @@ deploy:
   skip_cleanup: true
   draft: true
   file_glob: true
-  overwrite: true
+  overwrite: false
   on:
     branch: master
     tags: false
