@@ -5,6 +5,7 @@ hookDir=$(dirname "$0")
 WORKDIR=$(git rev-parse --show-toplevel)
 
 cd $WORKDIR
+[[ ! -f .env ]] && cp .env_default .env
 set -o allexport
 [[ -f .env ]] && source .env
 set +o allexport
