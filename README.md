@@ -10,10 +10,13 @@ BitBucket Server Cli
 ![Maintenance](https://img.shields.io/maintenance/yes/2020)
 
 * [Install](#install)
+  * [OSX](#osx)
+  * [Linux](#linux)
 * [Run](#run)
-* [Caveats](#caveats)
+* [Disclaimer](#disclaimer)
 
 ## Install
+#### OSX
 ```shell script
 # From brew
 brew install jensim/bitbucket_server_cli/bitbucket_server_cli
@@ -23,6 +26,17 @@ cargo install bitbucket_server_cli
 
 # From source
 cargo install --path . --force
+```
+
+#### Linux
+& Windows subsystem Linux
+
+https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/
+```shell script
+brew install jensim/bitbucket_server_cli-linux/bitbucket_server_cli
+# or
+brew tap jensim/linuxbrew-bitbucket_server_cli-linux git@github.com:jensim/linuxbrew-bitbucket_server_cli-linux.git
+brew install bitbucket_server_cli
 ```
 
 ## Run
@@ -53,5 +67,10 @@ git config core.hooksPath .githooks
 ./.githooks/pre-commit
 ````
 
-## Caveats
-- only tested on Mac OS X
+## Disclaimer
+- Only tested on Mac OS X
+- Use at own risk
+- You are responsible for any and all actions you perform with this tool
+  - Leagal
+  - Company policy
+  - Any other
