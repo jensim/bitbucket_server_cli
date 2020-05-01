@@ -70,7 +70,8 @@ deploy:
   skip_cleanup: true
   draft: true
   file_glob: true
-  overwrite: false
+  overwrite: true
+  run: git tag "tavis-$TRAVIS_BUILD_NUMBER"
   on:
     branch: master
     tags: false
