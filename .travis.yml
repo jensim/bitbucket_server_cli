@@ -83,7 +83,7 @@ deploy:
   draft: true
   file_glob: true
   overwrite: true
-  release_notes: "[![Build Status](https://api.travis-ci.org/jensim/bitbucket_server_cli.svg?commit=${TRAVIS_COMMIT})](https://travis-ci.org/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_ID})"
+  #release_notes: "[![Build Status](https://api.travis-ci.org/jensim/bitbucket_server_cli.svg?commit=${TRAVIS_COMMIT})](https://travis-ci.org/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_ID})"
   on:
     branch: master
     tags: false
