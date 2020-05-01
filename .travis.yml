@@ -27,8 +27,8 @@ jobs:
     script:
     - cargo fmt --all -- --check
     - cargo clippy
-    - export GIT_TAG=travis-build-$TRAVIS_BUILD_NUMBER-$TRAVIS_BRANCH-$(date -u "+%Y-%m-%d %H-%M-%S")
-    - git tag $GIT_TAG -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
+    - export GIT_TAG=travis-build-$TRAVIS_BUILD_NUMBER-$TRAVIS_BRANCH-$(date -u "+%Y-%m-%d_%H-%M-%S")
+    - git tag "$GIT_TAG" -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
     - git push origin $GIT_TAG
     before_deploy: skip
     deploy: []
