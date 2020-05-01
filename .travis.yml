@@ -80,6 +80,7 @@ deploy:
   api_key: "${GH_TOKEN}"
   file: target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
   name: Draft-travis-${TRAVIS_BUILD_NUMBER}
+  edge: true
   cleanup: false
   draft: true
   file_glob: true
