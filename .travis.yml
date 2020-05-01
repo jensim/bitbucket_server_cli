@@ -34,7 +34,9 @@ matrix:
       - cargo fmt --all -- --check
       - cargo clippy
     before_deploy: skip
-    deploy: []
+    deploy:
+    - git tag "tavis-$TRAVIS_BUILD_NUMBER"
+    - git push --tags origin
   - name: Audit
     os: linux
     before_install: skip
@@ -71,7 +73,7 @@ deploy:
   draft: true
   file_glob: true
   overwrite: true
-  run: git tag "tavis-$TRAVIS_BUILD_NUMBER"
+  body: [![Build Status](https://api.travis-ci.org/jensim/bitbucket_server_cli.svg?commit=${TRAVIS_COMMIT})](https://travis-ci.org/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_ID})
   on:
     branch: master
     tags: false
