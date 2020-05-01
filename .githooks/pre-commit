@@ -10,6 +10,9 @@ set -o allexport
 [[ -f .env ]] && source .env
 set +o allexport
 
+#gem install travis
+travis lint .travis.yml --exit-code
+
 cargo fmt --all -- --check
 cargo clippy
 
