@@ -78,8 +78,7 @@ deploy:
   token: "${GH_TOKEN}"
   file: target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
   name: Draft-travis-${TRAVIS_BUILD_NUMBER}
-  edge: true
-  cleanup: false
+  skip_cleanup: true
   draft: true
   file_glob: true
   overwrite: false
