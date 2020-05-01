@@ -16,6 +16,10 @@ pub struct Git {
 
 impl Git {
     pub async fn git_going(self) {
+        if self.repos.is_empty() {
+            eprintln!("No repos to work on");
+            return;
+        }
         println!("Started working {} repositories", self.repos.len());
         let progress_bar: ProgressBar = ProgressBar::new(self.repos.len() as u64);
         progress_bar.set_style(
@@ -25,19 +29,21 @@ impl Git {
         );
         let mut projects: Vec<String> = self.repos.iter().map(|r| r.project_key.clone()).collect();
         projects.dedup();
-        projects.iter().for_each(|p| match std::fs::create_dir(p) {
-            Ok(_) => {}
-            Err(ref e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
-            Err(e) => {
-                eprintln!("Unable to create project dir {} due to err: {:?}", p, e);
-                std::process::exit(1);
+        projects.iter().for_each(|p| {
+            match std::fs::create_dir(format!("{}/{}", self.opts.output_directory, p)) {
+                Ok(_) => {}
+                Err(ref e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
+                Err(e) => {
+                    eprintln!("Unable to create project dir {} due to err: {:?}", p, e);
+                    std::process::exit(1);
+                }
             }
         });
         let clone_result = stream::iter(self.repos.iter().map(|repo| {
-            let reset = self.opts.reset_state;
+            let opts = self.opts.clone();
             let progress_bar = progress_bar.clone();
             async move {
-                let result = clone_or_update(&repo, reset).await;
+                let result = clone_or_update(&repo, opts).await;
                 progress_bar.inc(1);
                 result
             }
@@ -65,21 +71,21 @@ impl Git {
     }
 }
 
-async fn clone_or_update(repo: &Repo, do_reset_state: bool) -> Result<()> {
-    if dir_exists(&repo) {
-        if do_reset_state {
-            git_reset(repo).await?;
+async fn clone_or_update(repo: &Repo, git_opts: GitOpts) -> Result<()> {
+    if dir_exists(&repo, &git_opts.output_directory) {
+        if git_opts.reset_state {
+            git_reset(repo, &git_opts.output_directory).await?;
         }
-        git_update(&repo).await?;
+        git_update(&repo, &git_opts.output_directory).await?;
     } else {
-        git_clone(&repo).await?;
-        git_reset(repo).await?;
+        git_clone(&repo, &git_opts.output_directory).await?;
+        git_reset(repo, &git_opts.output_directory).await?;
     }
     Ok(())
 }
 
-async fn git_clone(repo: &Repo) -> Result<()> {
-    let string_path = format!("./{}", repo.project_key);
+async fn git_clone(repo: &Repo, output_directory: &str) -> Result<()> {
+    let string_path = format!("{}/{}", output_directory, repo.project_key);
     let path = Path::new(&string_path);
 
     let fail_suffix = "failed git clone";
@@ -96,8 +102,8 @@ async fn git_clone(repo: &Repo) -> Result<()> {
     }
 }
 
-async fn git_update(repo: &Repo) -> Result<()> {
-    let string_path = path(&repo);
+async fn git_update(repo: &Repo, output_directory: &str) -> Result<()> {
+    let string_path = path(&repo, output_directory);
     let path = Path::new(&string_path);
 
     let fail_suffix = "failed git pull";
@@ -114,8 +120,8 @@ async fn git_update(repo: &Repo) -> Result<()> {
     }
 }
 
-async fn git_reset(repo: &Repo) -> Result<()> {
-    let string_path = path(repo);
+async fn git_reset(repo: &Repo, output_directory: &str) -> Result<()> {
+    let string_path = path(repo, output_directory);
     let path = Path::new(&string_path);
     match exec("git reset --hard", path).await {
         Ok(_) => match exec("git checkout master --quiet --force --theirs", path).await {
@@ -177,13 +183,18 @@ async fn exec(cmd: &str, path: &Path) -> Result<Output> {
     }
 }
 
-fn path(repo: &Repo) -> String {
-    return format!("./{}/{}", repo.project_key.clone(), repo.name.clone());
+fn path(repo: &Repo, output_directory: &str) -> String {
+    return format!(
+        "{}/{}/{}",
+        output_directory,
+        repo.project_key.clone(),
+        repo.name.clone()
+    );
 }
 
-fn dir_exists(repo: &Repo) -> bool {
+fn dir_exists(repo: &Repo, output_directory: &str) -> bool {
     match std::fs::read_dir(Path::new(
-        &format!("./{}/{}", repo.project_key, repo.name)[..],
+        &format!("{}/{}/{}", output_directory, repo.project_key, repo.name)[..],
     )) {
         Ok(_) => true,
         _ => false,
@@ -204,22 +215,22 @@ mod tests {
 
     #[tokio::test]
     async fn test_git_clone_and_update() {
-        let path = "tmp/test_repo";
-        let repo = repo("tmp", "test_repo");
+        let path = "/tmp/test_project/test_repo";
+        let repo = repo("test_project", "test_repo");
         std::fs::remove_dir_all(Path::new(path)).unwrap_or(());
         match std::fs::read_dir(path) {
             Ok(_) => assert!(false, "Failed cleaning away dir."),
             Err(_e) => {}
         }
-        std::fs::create_dir("tmp").unwrap_or(());
+        std::fs::create_dir("/tmp/test_project").unwrap_or(());
 
-        git_clone(&repo).await.unwrap();
+        git_clone(&repo, "/tmp").await.unwrap();
         match std::fs::read_dir(path) {
             Ok(_) => {}
             Err(e) => assert!(false, "Failed. {:?}", e),
         }
 
-        git_update(&repo).await.unwrap();
+        git_update(&repo, "/tmp").await.unwrap();
         match std::fs::read_dir(path) {
             Ok(_) => {}
             Err(e) => assert!(false, "Failed. {:?}", e),

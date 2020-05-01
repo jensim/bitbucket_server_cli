@@ -111,6 +111,12 @@ pub struct GitOpts {
         help = "Suppress warnings from failed git actions."
     )]
     pub quiet: bool,
+    #[structopt(
+        long = "output_directory",
+        help = "Suppress warnings from failed git actions.",
+        default_value = "."
+    )]
+    pub output_directory: String,
 }
 arg_enum! {
     #[derive(Clone, Debug)]

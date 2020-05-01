@@ -30,6 +30,9 @@ impl Cloner {
         } else if opts.git_opts.concurrency > 100 || opts.bitbucket_opts.concurrency > 100 {
             println!("Max concurrent actions = 100");
             std::process::exit(1);
+        } else if let Err(e) = std::fs::read_dir(opts.git_opts.output_directory.as_str()) {
+            println!("output_directory is not accessible, does it exist? {}", e);
+            std::process::exit(1);
         }
         if opts.bitbucket_opts.password_from_env {
             match password_from_env() {
@@ -100,6 +103,7 @@ mod tests {
                 reset_state: false,
                 concurrency: 1,
                 quiet: false,
+                output_directory: ".".to_owned(),
             },
         };
         match Cloner::new(opts).git_clone().await {

@@ -41,6 +41,7 @@ fn opts() -> Result<Opts> {
             reset_state: false,
             concurrency: 5,
             quiet: false,
+            output_directory: "/tmp".to_owned(),
         },
     })
 }
@@ -49,14 +50,16 @@ fn opts() -> Result<Opts> {
 async fn test_ssh() {
     let opts: Opts = opts().unwrap();
     let bitbucket_project = env("BITBUCKET_PROJECT").unwrap();
+    let path = format!("{}/{}", &opts.git_opts.output_directory, &bitbucket_project);
+    std::fs::remove_dir(&path).unwrap_or_default();
     match Cloner::new(opts).git_clone().await {
         Ok(_) => {}
         Err(e) => {
             assert!(false, "Failed cloning {}", e.msg);
         }
     };
-    let dir = std::fs::read_dir(&bitbucket_project).unwrap();
     let mut found_git_dir = false;
+    let dir = std::fs::read_dir(path).unwrap();
     'outer: for dir in dir {
         if dir.is_ok() {
             let dir = dir.unwrap();

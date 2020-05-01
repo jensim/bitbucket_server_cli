@@ -46,6 +46,7 @@ pub fn opts(opts: &Opts) -> Opts {
             project_keys: opts.git_opts.project_keys.clone(),
             concurrency: opts.git_opts.concurrency,
             quiet: opts.git_opts.quiet,
+            output_directory: opts.git_opts.output_directory.clone(),
         },
         interactive: opts.interactive,
     }
