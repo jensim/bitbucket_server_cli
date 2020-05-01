@@ -57,9 +57,7 @@ before_install:
 - openssl aes-256-cbc -K $encrypted_b2704e9bbe4d_key -iv $encrypted_b2704e9bbe4d_iv
   -in travis_encrypted/id_rsa.pub.enc -out travis_encrypted/id_rsa.pub -d
 - chmod 0400 travis_encrypted/id_rsa{,.pub}
-#- mv travis_encrypted/id_rsa{,.pub} ${HOME}/.ssh/
-- echo "Host github.com" > ${HOME}/.ssh/config
-- echo "  IdentityFile  $(pwd)/travis_encrypted/id_rsa" >> ~/.ssh/config
+- mv travis_encrypted/id_rsa{,.pub} ${HOME}/.ssh/
 - git remote set-url origin git@github.com:jensim/bitbucket_server_cli.git
 - git config --global user.email "builds@travis-ci.com"
 - git config --global user.name "Travis CI"
