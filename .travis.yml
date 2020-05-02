@@ -34,6 +34,11 @@ jobs:
   - stage: Build
     name: Windows Build
     os: windows
+    before_deploy:
+    - pushd target/release
+    - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" $( ls bitbucket_server_cli{,.exe} 2>/dev/null )
+    - certutil -hashfile bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
+    - popd
 
 install: cargo build --release --verbose
 
@@ -52,7 +57,7 @@ deploy:
   name: Draft-travis-${TRAVIS_BUILD_NUMBER}
   edge: true
   cleanup: false
-  release_notes: "Travis build #${TRAVIS_BUILD_ID} [![Build Status](https://api.travis-ci.org/jensim/bitbucket_server_cli.svg?commit=${TRAVIS_COMMIT})](https://travis-ci.org/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_ID})"
+  release_notes: "Travis build #${TRAVIS_BUILD_NUMBER} [![Build Status](https://api.travis-ci.org/jensim/bitbucket_server_cli.svg?commit=${TRAVIS_COMMIT})](https://travis-ci.org/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_ID})"
   draft: true
   file_glob: true
   overwrite: false
