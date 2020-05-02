@@ -16,19 +16,19 @@ env:
 
 jobs:
   fast_finish: true
-  allow_failures:
-  - name: Audit
   include:
-  - stage: Checkup
-    name: Linting
-    install: skip
+  - stage: Linux Build
+    name: Linux Build
     before_script:
+    - cargo install cargo-audit
     - rustup component add rustfmt-preview
     - rustup component add clippy-preview
     script:
     - cargo fmt --all -- --check
     - cargo clippy
-
+    - cargo audit
+    - cargo test --release --verbose --lib
+    after_deploy:
     - git remote set-url origin git@github.com:jensim/bitbucket_server_cli.git
     - git config --global user.email "builds@travis-ci.com"
     - git config --global user.name "Travis CI"
@@ -37,23 +37,9 @@ jobs:
     - export GIT_TAG=travis-build-$TRAVIS_BUILD_NUMBER-$TRAVIS_BRANCH-$(date -u "+%Y-%m-%d_%H-%M-%S")
     - git tag "$GIT_TAG" -a -m "Generated tag from TravisCI build $TRAVIS_BUILD_NUMBER"
     - git push origin $GIT_TAG
-    before_deploy: skip
-    deploy: []
-  - stage: Checkup
-    name: Audit
-    before_install: skip
-    install: skip
-    before_script:
-    - cargo install cargo-audit
-    script:
-    - cargo audit
-    before_deploy: skip
-    deploy: []
   - stage: Build
     name: MacOS Build
     os: osx
-  - stage: Build
-    name: Linux Build
 
 before_install:
 - openssl aes-256-cbc -K $encrypted_f217180e22ee_key -iv $encrypted_f217180e22ee_iv
