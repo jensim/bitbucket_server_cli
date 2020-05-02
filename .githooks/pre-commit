@@ -11,7 +11,7 @@ set -o allexport
 set +o allexport
 
 #gem install travis
-#travis lint .travis.yml --exit-code
+travis lint .travis.yml --exit-code
 
 cargo fmt --all -- --check
 cargo clippy
