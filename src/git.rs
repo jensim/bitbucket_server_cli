@@ -30,7 +30,7 @@ impl Git {
         let mut projects: Vec<String> = self.repos.iter().map(|r| r.project_key.clone()).collect();
         projects.dedup();
         projects.iter().for_each(|p| {
-            match std::fs::create_dir(format!("{}/{}", self.opts.output_directory, p)) {
+            match std::fs::create_dir_all(format!("{}/{}", self.opts.output_directory, p)) {
                 Ok(_) => {}
                 Err(ref e) if e.kind() == std::io::ErrorKind::AlreadyExists => {}
                 Err(e) => {
@@ -88,17 +88,17 @@ async fn git_clone(repo: &Repo, output_directory: &str) -> Result<()> {
     let string_path = format!("{}/{}", output_directory, repo.project_key);
     let path = Path::new(&string_path);
 
-    let fail_suffix = "failed git clone";
+    let fail_suffix = format!("failed git clone into {}", output_directory);
     match exec(&*format!("git clone {} {}", repo.git, repo.name), path).await {
         Ok(o) if o.status.success() => Ok(()),
         Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(
-            fail_suffix,
+            &fail_suffix,
             repo,
             o.stdout,
             o.stderr,
         )),
-        Err(e) => Err(generate_repo_err(fail_suffix, repo, e.msg)),
-        _ => Err(generate_repo_err(fail_suffix, repo, "unknown".to_owned())),
+        Err(e) => Err(generate_repo_err(&fail_suffix, repo, e.msg)),
+        _ => Err(generate_repo_err(&fail_suffix, repo, "unknown".to_owned())),
     }
 }
 
@@ -166,9 +166,8 @@ fn generate_repo_err(suffix: &str, repo: &Repo, cause: String) -> GenericError {
     }
 }
 
-async fn exec(cmd: &str, path: &Path) -> Result<Output> {
-    let is_win: bool = cfg!(target_os = "windows");
-    if is_win {
+async fn exec<P: AsRef<Path>>(cmd: &str, path: P) -> Result<Output> {
+    if cfg!(target_os = "windows") {
         Ok(Command::new("cmd")
             .args(&["/C", cmd])
             .current_dir(path)
@@ -205,6 +204,11 @@ fn dir_exists(repo: &Repo, output_directory: &str) -> bool {
 mod tests {
     use super::*;
 
+    #[cfg(not(target_os = "windows"))]
+    const RM_STR: &str = "rm -rf test_repo";
+    #[cfg(target_os = "windows")]
+    const RM_STR: &str = "rmdir /Q /S test_repo";
+
     fn repo(project_key: &str, name: &str) -> Repo {
         Repo {
             project_key: String::from(project_key),
@@ -215,25 +219,24 @@ mod tests {
 
     #[tokio::test]
     async fn test_git_clone_and_update() {
-        let path = "/tmp/test_project/test_repo";
+        let repo_path = "/tmp/test_project/test_repo";
         let repo = repo("test_project", "test_repo");
-        std::fs::remove_dir_all(Path::new(path)).unwrap_or(());
-        match std::fs::read_dir(path) {
-            Ok(_) => assert!(false, "Failed cleaning away dir."),
-            Err(_e) => {}
+        let project_path = "/tmp/test_project";
+        let output_directory = "/tmp";
+        std::fs::create_dir_all(project_path).unwrap();
+        assert!(
+            Path::new(project_path).exists(),
+            "Project dir should exist."
+        );
+        if let Err(e) = exec(RM_STR, project_path).await {
+            eprintln!("Failed removing {} due to {:?}", repo_path, e)
         }
-        std::fs::create_dir("/tmp/test_project").unwrap_or(());
+        assert!(!Path::new(repo_path).exists(), "Repo dir should not exist.");
 
-        git_clone(&repo, "/tmp").await.unwrap();
-        match std::fs::read_dir(path) {
-            Ok(_) => {}
-            Err(e) => assert!(false, "Failed. {:?}", e),
-        }
+        git_clone(&repo, output_directory).await.unwrap();
+        assert!(Path::new(repo_path).exists(), "Failed cleaning away dir.");
 
-        git_update(&repo, "/tmp").await.unwrap();
-        match std::fs::read_dir(path) {
-            Ok(_) => {}
-            Err(e) => assert!(false, "Failed. {:?}", e),
-        }
+        git_update(&repo, output_directory).await.unwrap();
+        assert!(Path::new(repo_path).exists(), "Failed cleaning away dir.");
     }
 }

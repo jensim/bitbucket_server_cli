@@ -3,3 +3,5 @@
 Cargo.lock
 .bitbucket_server_cli.db
 .env
+tmp
+
