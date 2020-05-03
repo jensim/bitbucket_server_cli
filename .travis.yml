@@ -37,7 +37,7 @@ jobs:
     before_deploy:
     - pushd target/release
     - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tgz" bitbucket_server_cli.exe
-    - certutil -hashfile bitbucket_server_cli-${TRAVIS_OS_NAME}.tgz
+    - certutil -hashfile bitbucket_server_cli-${TRAVIS_OS_NAME}.tgz sha256
     - popd
 
 install: cargo build --release --verbose
