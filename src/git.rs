@@ -149,11 +149,11 @@ fn generate_repo_err_from_output(
 
 fn cause_to_str(cause: Vec<u8>) -> Option<String> {
     if cause.is_empty() {
-        return None;
-    }
-    match std::str::from_utf8(cause.as_slice()) {
-        Ok(cause) => Some(cause.to_owned()),
-        _ => None,
+        None
+    } else if let Ok(cause) = std::str::from_utf8(cause.as_slice()) {
+        Some(cause.to_owned())
+    } else {
+        None
     }
 }
 
@@ -167,19 +167,15 @@ fn generate_repo_err(suffix: &str, repo: &Repo, cause: String) -> GenericError {
 }
 
 async fn exec<P: AsRef<Path>>(cmd: &str, path: P) -> Result<Output> {
-    if cfg!(target_os = "windows") {
-        Ok(Command::new("cmd")
-            .args(&["/C", cmd])
-            .current_dir(path)
-            .output()
-            .await?)
-    } else {
-        Ok(Command::new("sh")
-            .args(&["-c", cmd])
-            .current_dir(path)
-            .output()
-            .await?)
-    }
+    #[cfg(target_os = "windows")]
+    let (shell, first) = ("cmd", "/C");
+    #[cfg(not(target_os = "windows"))]
+    let (shell, first) = ("sh", "-c");
+    Ok(Command::new(shell)
+        .args(&[first, cmd])
+        .current_dir(path)
+        .output()
+        .await?)
 }
 
 fn path(repo: &Repo, output_directory: &str) -> String {
@@ -192,12 +188,7 @@ fn path(repo: &Repo, output_directory: &str) -> String {
 }
 
 fn dir_exists(repo: &Repo, output_directory: &str) -> bool {
-    match std::fs::read_dir(Path::new(
-        &format!("{}/{}/{}", output_directory, repo.project_key, repo.name)[..],
-    )) {
-        Ok(_) => true,
-        _ => false,
-    }
+    Path::new(&path(repo, output_directory)).exists()
 }
 
 #[cfg(test)]
