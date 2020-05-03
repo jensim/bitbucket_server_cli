@@ -5,9 +5,11 @@ BitBucket Server Cli
 [![Travis-Build](https://travis-ci.org/jensim/bitbucket_server_cli.svg?branch=master)](https://travis-ci.org/jensim/bitbucket_server_cli)
 
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+
 ![Crates.io](https://img.shields.io/crates/l/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/v/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)
+
 ![State](https://img.shields.io/badge/maintenance-working_but_experimental-blue.svg)
 ![Maintenance](https://img.shields.io/maintenance/yes/2020)
 
