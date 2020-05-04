@@ -1,56 +1,14 @@
 use std::result::Result as StdResult;
 
 use dialoguer::{theme::ColorfulTheme, Checkboxes, Confirmation, Input, PasswordInput};
-use generic_error::{GenericError, Result};
+use generic_error::Result;
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
-use crate::prompts::{
-    Prompt, PROMPT_BB_PASSWORD, PROMPT_BB_PROJECT_ALL, PROMPT_BB_PROJECT_SOME, PROMPT_BB_SERVER,
-    PROMPT_BB_USERNAME,
-};
-use crate::types::{BitBucketOpts, GitOpts, Opts, Repo};
+use crate::prompts::{Prompt, PROMPT_BB_PROJECT_SOME};
+use crate::types::Repo;
+use crate::util::bail;
 
 const PROP_FILE: &str = ".bitbucket_server_cli.db";
-
-pub fn opts(opts: &Opts) -> Opts {
-    let bit_bucket_server: Option<String> = match opts.bitbucket_opts.server.clone() {
-        None => get_with_default(&PROMPT_BB_SERVER, None, false),
-        Some(s) => Some(s),
-    };
-    let bit_bucket_username: Option<String> = match opts.bitbucket_opts.username.clone() {
-        None => get_with_default(&PROMPT_BB_USERNAME, None, true),
-        Some(s) => Some(s),
-    };
-    let bit_bucket_password: Option<String> = match bit_bucket_username {
-        None => None,
-        Some(_) if opts.bitbucket_opts.password_from_env => None,
-        Some(_) if opts.bitbucket_opts.password.is_none() => get_password(&PROMPT_BB_PASSWORD),
-        _ => None,
-    };
-    let bit_bucket_project_all: bool =
-        opts.git_opts.clone_all || get_bool(&PROMPT_BB_PROJECT_ALL, false);
-
-    Opts {
-        bitbucket_opts: BitBucketOpts {
-            password: bit_bucket_password,
-            server: bit_bucket_server,
-            username: bit_bucket_username,
-            concurrency: opts.bitbucket_opts.concurrency,
-            verbose: opts.bitbucket_opts.verbose,
-            password_from_env: opts.bitbucket_opts.password_from_env,
-            clone_type: opts.bitbucket_opts.clone_type.clone(),
-        },
-        git_opts: GitOpts {
-            reset_state: opts.git_opts.reset_state,
-            clone_all: bit_bucket_project_all,
-            project_keys: opts.git_opts.project_keys.clone(),
-            concurrency: opts.git_opts.concurrency,
-            quiet: opts.git_opts.quiet,
-            output_directory: opts.git_opts.output_directory.clone(),
-        },
-        interactive: opts.interactive,
-    }
-}
 
 pub fn select_projects(repos: &[Repo]) -> Vec<String> {
     let mut project_keys: Vec<String> = Vec::new();
@@ -96,13 +54,14 @@ pub fn password_from_env() -> Result<String> {
     let key = "BITBUCKET_PASSWORD";
     match std::env::var(key) {
         Ok(val) => Ok(val),
-        Err(e) => Err(GenericError {
-            msg: format!("{} is not defined in the environment. {:?}", key, e),
-        }),
+        Err(e) => bail(&format!(
+            "{} is not defined in the environment. {:?}",
+            key, e
+        )),
     }
 }
 
-fn get_db() -> PickleDb {
+pub fn get_db() -> PickleDb {
     PickleDb::load(
         PROP_FILE,
         PickleDbDumpPolicy::AutoDump,
@@ -117,7 +76,7 @@ fn get_db() -> PickleDb {
     })
 }
 
-fn get_password(prompt: &Prompt) -> Option<String> {
+pub fn get_password(prompt: &Prompt) -> Option<String> {
     let password = PasswordInput::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt.prompt_str)
         .allow_empty_password(true)
@@ -125,7 +84,7 @@ fn get_password(prompt: &Prompt) -> Option<String> {
     resolve(password)
 }
 
-fn get_bool(prompt: &Prompt, default: bool) -> bool {
+pub fn get_bool(prompt: &Prompt, default: bool) -> bool {
     let mut db = get_db();
     let read_val: bool = db.get(prompt.db_key).unwrap_or(default);
     let prompt_val = Confirmation::new()
@@ -140,7 +99,11 @@ fn get_bool(prompt: &Prompt, default: bool) -> bool {
     prompt_val
 }
 
-fn get_with_default(prompt: &Prompt, default: Option<String>, allow_empty: bool) -> Option<String> {
+pub fn get_with_default(
+    prompt: &Prompt,
+    default: Option<String>,
+    allow_empty: bool,
+) -> Option<String> {
     let mut db = get_db();
     let read_val: Option<String> = db.get(prompt.db_key).or(default);
     let ask: Option<String> = match read_val {

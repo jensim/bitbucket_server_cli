@@ -1,5 +1,8 @@
 extern crate bitbucket_server_cli;
 
+use rand::distributions::Alphanumeric;
+use rand::{thread_rng, Rng};
+
 use generic_error::{GenericError, Result};
 
 use bitbucket_server_cli::{
@@ -23,6 +26,10 @@ fn env_option(key: &str) -> Option<String> {
     }
 }
 
+fn random_string(len: usize) -> String {
+    thread_rng().sample_iter(&Alphanumeric).take(len).collect()
+}
+
 fn opts() -> Result<Opts> {
     Ok(Opts {
         interactive: false,
@@ -41,17 +48,23 @@ fn opts() -> Result<Opts> {
             reset_state: false,
             concurrency: 5,
             quiet: false,
-            output_directory: "/tmp".to_owned(),
+            output_directory: format!("/tmp/test_clone_{}", random_string(12)),
         },
     })
 }
 
+#[cfg(test)]
 #[tokio::test]
 async fn test_ssh() {
     let opts: Opts = opts().unwrap();
     let bitbucket_project = env("BITBUCKET_PROJECT").unwrap();
-    let path = format!("{}/{}", &opts.git_opts.output_directory, &bitbucket_project);
-    std::fs::remove_dir(&path).unwrap_or_default();
+    let output_directory = opts.git_opts.output_directory.clone();
+    assert!(
+        std::fs::create_dir_all(&output_directory).is_ok(),
+        "Failed creating output dir for test {}.",
+        &output_directory
+    );
+    let path = format!("{}/{}", &output_directory, &bitbucket_project);
     match Cloner::new(opts).git_clone().await {
         Ok(_) => {}
         Err(e) => {
@@ -59,7 +72,7 @@ async fn test_ssh() {
         }
     };
     let mut found_git_dir = false;
-    let dir = std::fs::read_dir(path).unwrap();
+    let dir = std::fs::read_dir(&path).unwrap();
     'outer: for dir in dir {
         if dir.is_ok() {
             let dir = dir.unwrap();
@@ -77,16 +90,27 @@ async fn test_ssh() {
             }
         }
     }
+    if let Err(e) = std::fs::remove_dir(&output_directory) {
+        eprintln!("Failed removing {} due to {:?}", &path, e)
+    }
     assert!(found_git_dir, "No git dirs found. I am disappointed.");
 }
 
+#[cfg(test)]
 #[tokio::test]
 async fn test_http() {
     let opts: Opts = opts().unwrap();
-    match Cloner::new(opts).git_clone().await {
-        Ok(_) => {}
-        Err(e) => {
-            assert!(false, "Failed cloning {}", e.msg);
-        }
-    };
+    let output_directory = opts.git_opts.output_directory.clone();
+    assert!(
+        std::fs::create_dir_all(&output_directory).is_ok(),
+        "Failed creating output dir for test {}.",
+        &output_directory
+    );
+    let result = Cloner::new(opts).git_clone().await;
+    if let Err(e) = std::fs::remove_dir(&output_directory) {
+        eprintln!("Failed removing {} due to {:?}", &output_directory, e);
+    }
+    if let Err(e) = result {
+        assert!(false, "Failed cloning {}", e.msg);
+    }
 }
