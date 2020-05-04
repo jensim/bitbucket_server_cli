@@ -1,12 +1,11 @@
 use std::path::Path;
-use std::process::Output;
 
 use futures::stream::{self, StreamExt};
-use generic_error::{GenericError, Result};
+use generic_error::Result;
 use indicatif::{ProgressBar, ProgressStyle};
-use tokio::process::Command;
 
 use crate::types::{GitOpts, Repo};
+use crate::util::{bail, exec};
 
 #[derive(Clone)]
 pub struct Git {
@@ -91,14 +90,11 @@ async fn git_clone(repo: &Repo, output_directory: &str) -> Result<()> {
     let fail_suffix = format!("failed git clone into {}", output_directory);
     match exec(&*format!("git clone {} {}", repo.git, repo.name), path).await {
         Ok(o) if o.status.success() => Ok(()),
-        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(
-            &fail_suffix,
-            repo,
-            o.stdout,
-            o.stderr,
-        )),
-        Err(e) => Err(generate_repo_err(&fail_suffix, repo, e.msg)),
-        _ => Err(generate_repo_err(&fail_suffix, repo, "unknown".to_owned())),
+        Ok(o) if !o.status.success() => {
+            generate_repo_err_from_output(&fail_suffix, repo, o.stdout, o.stderr)
+        }
+        Err(e) => generate_repo_err(&fail_suffix, repo, e.msg),
+        _ => generate_repo_err(&fail_suffix, repo, "unknown".to_owned()),
     }
 }
 
@@ -109,14 +105,11 @@ async fn git_update(repo: &Repo, output_directory: &str) -> Result<()> {
     let fail_suffix = "failed git pull";
     match exec("git pull --ff-only", path).await {
         Ok(o) if o.status.success() => Ok(()),
-        Ok(o) if !o.status.success() => Err(generate_repo_err_from_output(
-            fail_suffix,
-            repo,
-            o.stdout,
-            o.stderr,
-        )),
-        Err(e) => Err(generate_repo_err(fail_suffix, repo, e.msg)),
-        _ => Err(generate_repo_err(fail_suffix, repo, "unknown".to_owned())),
+        Ok(o) if !o.status.success() => {
+            generate_repo_err_from_output(fail_suffix, repo, o.stdout, o.stderr)
+        }
+        Err(e) => generate_repo_err(fail_suffix, repo, e.msg),
+        _ => generate_repo_err(fail_suffix, repo, "unknown".to_owned()),
     }
 }
 
@@ -125,19 +118,19 @@ async fn git_reset(repo: &Repo, output_directory: &str) -> Result<()> {
     let path = Path::new(&string_path);
     match exec("git reset --hard", path).await {
         Ok(_) => match exec("git checkout master --quiet --force --theirs", path).await {
-            Err(e) => Err(generate_repo_err("failed 'checkout master'", repo, e.msg)),
+            Err(e) => generate_repo_err("failed 'checkout master'", repo, e.msg),
             Ok(_) => Ok(()),
         },
-        Err(e) => Err(generate_repo_err("failed resetting repo", repo, e.msg)),
+        Err(e) => generate_repo_err("failed resetting repo", repo, e.msg),
     }
 }
 
-fn generate_repo_err_from_output(
+fn generate_repo_err_from_output<T>(
     suffix: &str,
     repo: &Repo,
     cause_out: Vec<u8>,
     cause_err: Vec<u8>,
-) -> GenericError {
+) -> Result<T> {
     let cause = match (cause_to_str(cause_err), cause_to_str(cause_out)) {
         (Some(e), Some(o)) => format!("Err: '{}' Output: '{}'", e.trim(), o.trim()),
         (Some(e), None) => format!("Err: '{}'", e.trim()),
@@ -157,25 +150,11 @@ fn cause_to_str(cause: Vec<u8>) -> Option<String> {
     }
 }
 
-fn generate_repo_err(suffix: &str, repo: &Repo, cause: String) -> GenericError {
-    GenericError {
-        msg: format!(
-            "{}/{} {}. Cause: {}",
-            repo.project_key, repo.name, suffix, cause
-        ),
-    }
-}
-
-async fn exec<P: AsRef<Path>>(cmd: &str, path: P) -> Result<Output> {
-    #[cfg(target_os = "windows")]
-    let (shell, first) = ("cmd", "/C");
-    #[cfg(not(target_os = "windows"))]
-    let (shell, first) = ("sh", "-c");
-    Ok(Command::new(shell)
-        .args(&[first, cmd])
-        .current_dir(path)
-        .output()
-        .await?)
+fn generate_repo_err<T>(suffix: &str, repo: &Repo, cause: String) -> Result<T> {
+    bail(&format!(
+        "{}/{} {}. Cause: {}",
+        repo.project_key, repo.name, suffix, cause
+    ))
 }
 
 fn path(repo: &Repo, output_directory: &str) -> String {
