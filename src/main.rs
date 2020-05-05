@@ -1,14 +1,18 @@
+use bitbucket_server_cli::{cloner::Cloner, completion::gen_completions, types::Opts};
+use generic_error::{GenericError, Result};
 use structopt::StructOpt;
-
-use bitbucket_server_cli::{cloner::Cloner, types::Opts};
 
 #[tokio::main]
 async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
     let opts: Opts = Opts::from_args();
-    match Cloner::new(opts).git_clone().await {
+    let result: Result<()> = match opts {
+        Opts::Clone(c) => Cloner::new(c).git_clone().await,
+        Opts::Completions => gen_completions(),
+    };
+    match result {
         Ok(_) => Ok(()),
-        Err(e) => {
-            eprintln!("{}", e.msg);
+        Err(GenericError { msg }) => {
+            eprintln!("{}", msg);
             std::process::exit(1);
         }
     }

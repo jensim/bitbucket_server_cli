@@ -9,6 +9,7 @@ pub mod cloner;
 pub mod types;
 
 mod bitbucket;
+pub mod completion;
 mod git;
 mod input;
 mod prompts;

@@ -5,9 +5,10 @@ use rand::{thread_rng, Rng};
 
 use generic_error::{GenericError, Result};
 
+use bitbucket_server_cli::types::CloneOpts;
 use bitbucket_server_cli::{
     cloner::Cloner,
-    types::{BitBucketOpts, CloneType, GitOpts, Opts},
+    types::{BitBucketOpts, CloneType, GitOpts},
 };
 
 fn env(key: &str) -> Result<String> {
@@ -30,9 +31,9 @@ fn random_string(len: usize) -> String {
     thread_rng().sample_iter(&Alphanumeric).take(len).collect()
 }
 
-fn opts() -> Result<Opts> {
-    Ok(Opts {
-        interactive: false,
+fn opts() -> Result<CloneOpts> {
+    Ok(CloneOpts {
+        batch_mode: true,
         bitbucket_opts: BitBucketOpts {
             server: Some(env("BITBUCKET_SERVER")?),
             username: env_option("BITBUCKET_USER"),
@@ -56,7 +57,7 @@ fn opts() -> Result<Opts> {
 #[cfg(test)]
 #[tokio::test]
 async fn test_ssh() {
-    let opts: Opts = opts().unwrap();
+    let opts: CloneOpts = opts().unwrap();
     let bitbucket_project = env("BITBUCKET_PROJECT").unwrap();
     let output_directory = opts.git_opts.output_directory.clone();
     assert!(
@@ -90,7 +91,7 @@ async fn test_ssh() {
             }
         }
     }
-    if let Err(e) = std::fs::remove_dir(&output_directory) {
+    if let Err(e) = std::fs::remove_dir_all(&output_directory) {
         eprintln!("Failed removing {} due to {:?}", &path, e)
     }
     assert!(found_git_dir, "No git dirs found. I am disappointed.");
@@ -99,7 +100,7 @@ async fn test_ssh() {
 #[cfg(test)]
 #[tokio::test]
 async fn test_http() {
-    let opts: Opts = opts().unwrap();
+    let opts: CloneOpts = opts().unwrap();
     let output_directory = opts.git_opts.output_directory.clone();
     assert!(
         std::fs::create_dir_all(&output_directory).is_ok(),
@@ -107,7 +108,7 @@ async fn test_http() {
         &output_directory
     );
     let result = Cloner::new(opts).git_clone().await;
-    if let Err(e) = std::fs::remove_dir(&output_directory) {
+    if let Err(e) = std::fs::remove_dir_all(&output_directory) {
         eprintln!("Failed removing {} due to {:?}", &output_directory, e);
     }
     if let Err(e) = result {
