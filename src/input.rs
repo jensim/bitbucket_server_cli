@@ -1,6 +1,6 @@
 use std::result::Result as StdResult;
 
-use dialoguer::{theme::ColorfulTheme, Checkboxes, Confirmation, Input, PasswordInput};
+use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Password};
 use generic_error::Result;
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
@@ -27,9 +27,9 @@ pub fn select_projects(repos: &[Repo]) -> Vec<String> {
         .collect();
     let mut answer: Vec<usize> = Vec::new();
     while answer.is_empty() {
-        answer = Checkboxes::new()
+        answer = MultiSelect::new()
             .items(&project_keys)
-            .with_prompt(&PROMPT_BB_PROJECT_SOME.prompt_str)
+            .with_prompt(PROMPT_BB_PROJECT_SOME.prompt_str)
             .defaults(&pre_selected[..])
             .interact()
             .unwrap_or_else(|_e| {
@@ -77,7 +77,7 @@ pub fn get_db() -> PickleDb {
 }
 
 pub fn get_password(prompt: &Prompt) -> Option<String> {
-    let password = PasswordInput::with_theme(&ColorfulTheme::default())
+    let password = Password::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt.prompt_str)
         .allow_empty_password(true)
         .interact();
@@ -87,8 +87,8 @@ pub fn get_password(prompt: &Prompt) -> Option<String> {
 pub fn get_bool(prompt: &Prompt, default: bool) -> bool {
     let mut db = get_db();
     let read_val: bool = db.get(prompt.db_key).unwrap_or(default);
-    let prompt_val = Confirmation::new()
-        .with_text(prompt.prompt_str)
+    let prompt_val = Confirm::new()
+        .with_prompt(prompt.prompt_str)
         .default(read_val)
         .show_default(true)
         .interact()

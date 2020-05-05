@@ -16,6 +16,7 @@ BitBucket Server Cli
 * [Install](#install)
   * [OSX](#osx)
   * [Linux](#linux)
+  * [Windows](#windows)
 * [Run](#run)
 * [Disclaimer](#disclaimer)
 
@@ -43,24 +44,31 @@ brew tap jensim/linuxbrew-bitbucket_server_cli-linux git@github.com:jensim/linux
 brew install bitbucket_server_cli
 ```
 
+#### Windows
+Head over to the [releases page](https://github.com/jensim/bitbucket_server_cli/releases) and snag the windows `*.exe` archive.
+Or build from source. 
+Or install from Cargo, which will build from source.
+
+**Interactive mode doesn't work in `Cygwin`/`GitBash` terminals due to lacking support in dialoguer, stick to using `cmd.exe` and `PowerShell` terminals**
+
 ## Run
 ```shell script
 # Fully interactive
-bitbucket_server_cli -I
+bitbucket_server_cli clone
 
 # Partially interactive
-bitbucket_server_cli -I -s https://example.com
+bitbucket_server_cli clone -s https://example.com
 
 # Batch mode 
-bitbucket_server_cli -s https://example.com -A
+bitbucket_server_cli -B -s https://example.com -A
 
 # 'Safe' password usage in batch mode. Depending on terminal, password might be seen in process description.
 IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
 export BITBUCKET_PASSWORD
-bitbucket_server_cli -s https://example.com -A -u jensim -w $BITBUCKET_PASSWORD
+bitbucket_server_cli -s https://example.com -A -u jensim -W
 
 # Run from source
-cargo run -- -I
+cargo run -- clone
 ```
 
 ## git hooks
@@ -75,6 +83,6 @@ git config core.hooksPath .githooks
 - Only tested on Mac OS X
 - Use at own risk
 - You are responsible for any and all actions you perform with this tool
-  - Leagal
+  - Legal
   - Company policy
   - Any other

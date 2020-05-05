@@ -1,26 +1,34 @@
+use std::path::Path;
+
+use clap::arg_enum;
+use generic_error::Result;
+use structopt::StructOpt;
+
 use crate::input::{get_bool, get_password, get_with_default, password_from_env};
 use crate::prompts::{
     PROMPT_BB_PASSWORD, PROMPT_BB_PROJECT_ALL, PROMPT_BB_SERVER, PROMPT_BB_USERNAME,
 };
 use crate::util::bail;
-use clap::arg_enum;
-use generic_error::Result;
-use std::path::Path;
-use structopt::StructOpt;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
     name = "BitBucket Server Cli",
     about = "Clone a thousand repos, and keep em up to date, no problem."
 )]
-pub struct Opts {
+pub enum Opts {
+    Clone(CloneOpts),
+    Completions,
+}
+
+#[derive(StructOpt, Debug, Clone)]
+pub struct CloneOpts {
     #[structopt(
-        short = "I",
-        long = "interactive",
-        name = "interactive",
-        help = "Run terminal in interactive mode, asking for required params like password user, host etc"
+        short = "B",
+        long = "batch",
+        name = "batch_mode",
+        help = "Run terminal in batch mode, with no interactions."
     )]
-    pub interactive: bool,
+    pub batch_mode: bool,
     #[structopt(flatten)]
     pub bitbucket_opts: BitBucketOpts,
     #[structopt(flatten)]
@@ -73,10 +81,10 @@ pub struct BitBucketOpts {
     )]
     pub password_from_env: bool,
     #[structopt(long = "clone_type",
-        name = "clone_type",
-        possible_values = & CloneType::variants(),
-        case_insensitive = true,
-        default_value = "ssh"
+    name = "clone_type",
+    possible_values = & CloneType::variants(),
+    case_insensitive = true,
+    default_value = "ssh"
     )]
     pub clone_type: CloneType,
 }
@@ -136,9 +144,9 @@ arg_enum! {
     }
 }
 
-impl Opts {
+impl CloneOpts {
     pub fn validate(&mut self) {
-        if self.interactive {
+        if self.interactive() {
             self.bitbucket_opts.server = match self.bitbucket_opts.server.clone() {
                 None => get_with_default(&PROMPT_BB_SERVER, None, false),
                 Some(s) => Some(s),
@@ -164,7 +172,7 @@ impl Opts {
             std::process::exit(1);
         } else if !self.git_opts.clone_all
             && self.git_opts.project_keys.is_empty()
-            && !self.interactive
+            && self.batch_mode
         {
             println!("project selection is required (all or keys)");
             std::process::exit(1);
@@ -184,6 +192,10 @@ impl Opts {
                 }
             }
         }
+    }
+
+    pub fn interactive(&self) -> bool {
+        !self.batch_mode
     }
 }
 

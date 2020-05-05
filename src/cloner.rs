@@ -4,15 +4,15 @@ use crate::{
     bitbucket::Bitbucket,
     git::Git,
     input::select_projects,
-    types::{Opts, Repo},
+    types::{CloneOpts, Repo},
 };
 
 pub struct Cloner {
-    opts: Opts,
+    opts: CloneOpts,
 }
 
 impl Cloner {
-    pub fn new(opts: Opts) -> Cloner {
+    pub fn new(opts: CloneOpts) -> Cloner {
         let mut opts = opts;
         opts.validate();
         Cloner { opts }
@@ -31,7 +31,7 @@ impl Cloner {
                 std::process::exit(1);
             }
         };
-        if self.opts.interactive && !self.opts.git_opts.clone_all && project_keys.is_empty() {
+        if self.opts.interactive() && !self.opts.git_opts.clone_all && project_keys.is_empty() {
             project_keys = select_projects(&repos);
         }
 
@@ -64,8 +64,8 @@ mod tests {
     #[tokio::test]
     #[ignore] // TODO fix test
     async fn cloner_integration_test() {
-        let opts = Opts {
-            interactive: false,
+        let opts = CloneOpts {
+            batch_mode: true,
             bitbucket_opts: BitBucketOpts {
                 server: Some("http://github.com".to_owned()),
                 verbose: true,
