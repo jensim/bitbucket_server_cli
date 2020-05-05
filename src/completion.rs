@@ -57,7 +57,9 @@ fn create_dir_if_necessary(output_dir: &str) -> Result<()> {
                     output_dir, e
                 )),
             },
-            Ok(_ans) => bail("Cannot proceed writing to output_directory without creating it first."),
+            Ok(_ans) => {
+                bail("Cannot proceed writing to output_directory without creating it first.")
+            }
             Err(e) => bail(&format!("Failed reading input due to {:?}", e)),
         }
     } else {
@@ -66,12 +68,11 @@ fn create_dir_if_necessary(output_dir: &str) -> Result<()> {
 }
 
 fn get_output_dir(shell: Shell) -> Result<String> {
-    let output_dir_default = get_default_completion_location(shell);
-    match Input::new()
-        .with_prompt("Output directory")
-        .default(output_dir_default)
-        .interact()
-    {
+    let mut input = Input::new();
+    if let Some(output_dir_default) = get_default_completion_location(shell)? {
+        input.default(output_dir_default);
+    }
+    match input.with_prompt("Output directory").interact() {
         Ok(output_dir) => {
             create_dir_if_necessary(&output_dir)?;
             Ok(output_dir)
@@ -81,8 +82,7 @@ fn get_output_dir(shell: Shell) -> Result<String> {
 }
 
 fn get_shell_selection() -> Result<Shell> {
-    //let variants1 = clap::Shell::variants(); //TODO
-    let variants1 = ["ZSH", "BASH", "POWERSHELL"];
+    let variants1 = clap::Shell::variants();
     match Select::new()
         .with_prompt("Shell")
         .default(0)
@@ -99,46 +99,20 @@ fn get_shell_selection() -> Result<Shell> {
         Err(e) => bail(&format!("Failed determining selection due to {:?}", e)),
     }
 }
-/*
-fn remove_old_completions_file(file: &str) -> Result<()> {
-    if Path::new(file).exists() {
-        match Confirm::new()
-            .with_prompt("Completions file already exists, may I remove it before moving on?")
-            .default(false)
-            .interact()
-        {
-            Ok(true) => match std::fs::remove_file(file) {
-                Ok(_) => {
-                    println!("File removed");
-                    Ok(())
-                }
-                Err(e) => bail(&format!("Failed removing file {} due to {:?}", file, e)),
-            },
-            Ok(false) => {
-                println!("Okay, bye");
-                std::process::exit(0)
-            }
-            Err(e) => return bail(&format!("Failed with input somehow. Caused by {:?}", e)),
-        }
-    } else {
-        Ok(())
-    }
-}
-*/
 
-fn get_default_completion_location(shell: Shell) -> String {
+fn get_default_completion_location(shell: Shell) -> Result<Option<String>> {
     let home = std::env::var("HOME");
     match (shell, home) {
-        (Shell::Zsh, Ok(home)) => format!("{}/.oh-my-zsh/completions", home),
-        (Shell::Bash, _) => "/usr/local/share/bash-completion".to_owned(),
-        (Shell::PowerShell, Ok(home)) => format!(r"{}\Documents\WindowsPowerShell\", home),
+        (Shell::Zsh, Ok(home)) => Ok(Some(format!("{}/.oh-my-zsh/completions", home))),
+        (Shell::Fish, Ok(home)) => Ok(Some(format!("{}/.config/fish/completions", home))),
+        (Shell::Bash, _) => Ok(Some("/usr/local/share/bash-completion".to_owned())),
+        (Shell::PowerShell, Ok(home)) => {
+            Ok(Some(format!(r"{}\Documents\WindowsPowerShell\", home)))
+        }
         (_, Err(e)) => {
             eprintln!("Failed reading HOME variable due to {:?}", e);
-            std::process::exit(1);
+            Ok(None)
         }
-        (s, Ok(_)) => {
-            eprintln!("Unsupported shell {}", s);
-            std::process::exit(1);
-        }
+        (_, Ok(_)) => Ok(None),
     }
 }
