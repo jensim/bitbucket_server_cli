@@ -17,7 +17,7 @@ use dialoguer::Confirm;
     about = "Clone a thousand repos, and keep em up to date, no problem."
 )]
 pub enum Opts {
-    Clone(CloneOpts),
+    CloneProjects(CloneOpts),
     CloneUsers(CloneOpts),
     Completions,
 }
