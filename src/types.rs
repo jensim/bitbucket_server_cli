@@ -84,10 +84,10 @@ pub struct BitBucketOpts {
     )]
     pub password_from_env: bool,
     #[structopt(long = "clone_type",
-    name = "clone_type",
-    possible_values = & CloneType::variants(),
-    case_insensitive = true,
-    default_value = "ssh"
+        name = "clone_type",
+        possible_values = & CloneType::variants(),
+        case_insensitive = true,
+        default_value = "ssh"
     )]
     pub clone_type: CloneType,
     #[structopt(
