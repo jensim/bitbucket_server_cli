@@ -16,5 +16,5 @@ set +o allexport
 cargo fmt
 cargo clippy
 
-cargo build
-cargo test --verbose
+cargo build --tests --bins --examples --color=always
+cargo test --verbose --color=always
