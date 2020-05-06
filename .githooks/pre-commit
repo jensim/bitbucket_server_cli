@@ -10,10 +10,14 @@ set -o allexport
 [[ -f .env ]] && source .env
 set +o allexport
 
+echo "Enter Bitbucket password: "
+IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
+export BITBUCKET_PASSWORD
+
 #gem install travis
 #travis lint .travis.yml --exit-code
 
-cargo fmt
+cargo fmt --all -- --check
 cargo clippy
 
 cargo build --tests --bins --examples --color=always

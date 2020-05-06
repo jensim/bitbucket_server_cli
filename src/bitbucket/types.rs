@@ -158,7 +158,7 @@ impl RepoUrlBuilder for UserResult {
     }
 
     fn get_filter_key(&self) -> String {
-        format!("~{}",self.slug.to_lowercase())
+        format!("~{}", self.slug.to_lowercase())
     }
 }
 
@@ -210,7 +210,7 @@ mod tests {
             password_from_env: false,
             clone_type: CloneType::HttpSavedLogin,
             project_keys: vec!["key".to_owned()],
-            all: false
+            all: false,
         };
         let vec1 = prjs.get_clone_links(&opts);
         assert_eq!(vec1.len(), 1, "Wrong number of output Repo objects");
@@ -233,7 +233,7 @@ mod tests {
             password_from_env: false,
             clone_type: CloneType::HTTP,
             project_keys: vec!["key".to_owned()],
-            all: false
+            all: false,
         };
         let vec1 = prjs.get_clone_links(&opts);
         assert_eq!(vec1.len(), 1);
