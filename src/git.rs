@@ -20,11 +20,11 @@ impl Git {
             eprintln!("No repos to work on");
             return;
         }
-        println!("Started working {} repositories", self.repos.len());
         let progress_bar: ProgressBar = ProgressBar::new(self.repos.len() as u64);
+        let bar_style = "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})";
         progress_bar.set_style(
             ProgressStyle::default_bar()
-                .template("[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})")
+                .template(&format!("Working repos {}", bar_style))
                 .progress_chars("#>-"),
         );
         let mut projects: Vec<String> = self.repos.iter().map(|r| r.project_key.clone()).collect();
