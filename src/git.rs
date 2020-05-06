@@ -4,7 +4,8 @@ use futures::stream::{self, StreamExt};
 use generic_error::Result;
 use indicatif::{ProgressBar, ProgressStyle};
 
-use crate::types::{GitOpts, Repo};
+use crate::bitbucket::types::Repo;
+use crate::types::GitOpts;
 use crate::util::{bail, exec};
 
 #[derive(Clone)]
