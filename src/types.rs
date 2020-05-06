@@ -17,9 +17,13 @@ use dialoguer::Confirm;
     about = "Clone a thousand repos, and keep em up to date, no problem."
 )]
 pub enum Opts {
+    #[structopt(about = "Clone projects and users combined")]
     Clone(CloneOpts),
+    #[structopt(about = "Clone projects")]
     CloneProjects(CloneOpts),
+    #[structopt(about = "Clone users")]
     CloneUsers(CloneOpts),
+    #[structopt(about = "Generate shell completions")]
     Completions,
 }
 
