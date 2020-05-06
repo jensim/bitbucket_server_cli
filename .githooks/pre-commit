@@ -5,6 +5,15 @@ hookDir=$(dirname "$0")
 WORKDIR=$(git rev-parse --show-toplevel)
 
 cd $WORKDIR
+
+#gem install travis
+#travis lint .travis.yml --exit-code
+
+cargo fmt --all -- --check
+cargo clippy
+
+cargo build --tests --bins --examples --color=always
+
 [[ ! -f .env ]] && cp .env_default .env
 set -o allexport
 [[ -f .env ]] && source .env
@@ -14,11 +23,4 @@ echo "Enter Bitbucket password: "
 IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
 export BITBUCKET_PASSWORD
 
-#gem install travis
-#travis lint .travis.yml --exit-code
-
-cargo fmt --all -- --check
-cargo clippy
-
-cargo build --tests --bins --examples --color=always
 cargo test --verbose --color=always
