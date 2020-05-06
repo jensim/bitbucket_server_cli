@@ -54,7 +54,6 @@ fn opts() -> Result<CloneOpts> {
     })
 }
 
-#[cfg(test)]
 #[tokio::test]
 async fn test_ssh() {
     let opts: CloneOpts = opts().unwrap();
@@ -66,7 +65,7 @@ async fn test_ssh() {
         &output_directory
     );
     let path = format!("{}/{}", &output_directory, &bitbucket_project);
-    match Cloner::new(opts).git_clone().await {
+    match Cloner::new(opts).unwrap().clone_projects().await {
         Ok(_) => {}
         Err(e) => {
             assert!(false, "Failed cloning {}", e.msg);
@@ -97,7 +96,6 @@ async fn test_ssh() {
     assert!(found_git_dir, "No git dirs found. I am disappointed.");
 }
 
-#[cfg(test)]
 #[tokio::test]
 async fn test_http() {
     let opts: CloneOpts = opts().unwrap();
@@ -107,7 +105,26 @@ async fn test_http() {
         "Failed creating output dir for test {}.",
         &output_directory
     );
-    let result = Cloner::new(opts).git_clone().await;
+    let result = Cloner::new(opts).unwrap().clone_projects().await;
+    if let Err(e) = std::fs::remove_dir_all(&output_directory) {
+        eprintln!("Failed removing {} due to {:?}", &output_directory, e);
+    }
+    if let Err(e) = result {
+        assert!(false, "Failed cloning {}", e.msg);
+    }
+}
+
+#[tokio::test]
+async fn test_user_http() {
+    let mut opts: CloneOpts = opts().unwrap();
+    opts.git_opts.project_keys = vec![env("BITBUCKET_USER").unwrap()];
+    let output_directory = opts.git_opts.output_directory.clone();
+    assert!(
+        std::fs::create_dir_all(&output_directory).is_ok(),
+        "Failed creating output dir for test {}.",
+        &output_directory
+    );
+    let result = Cloner::new(opts).unwrap().clone_users().await;
     if let Err(e) = std::fs::remove_dir_all(&output_directory) {
         eprintln!("Failed removing {} due to {:?}", &output_directory, e);
     }

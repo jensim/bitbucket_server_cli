@@ -4,8 +4,8 @@ use dialoguer::{theme::ColorfulTheme, Confirm, Input, MultiSelect, Password};
 use generic_error::Result;
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
+use crate::bitbucket::types::Repo;
 use crate::prompts::{Prompt, PROMPT_BB_PROJECT_SOME};
-use crate::types::Repo;
 use crate::util::bail;
 
 const PROP_FILE: &str = ".bitbucket_server_cli.db";

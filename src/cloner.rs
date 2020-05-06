@@ -1,10 +1,9 @@
 use generic_error::Result;
 
+use crate::util::bail;
 use crate::{
-    bitbucket::Bitbucket,
-    git::Git,
-    input::select_projects,
-    types::{CloneOpts, Repo},
+    bitbucket::types::Repo, bitbucket::worker::BitbucketWorker, git::Git, input::select_projects,
+    types::CloneOpts,
 };
 
 pub struct Cloner {
@@ -12,25 +11,34 @@ pub struct Cloner {
 }
 
 impl Cloner {
-    pub fn new(opts: CloneOpts) -> Cloner {
+    pub fn new(opts: CloneOpts) -> Result<Cloner> {
         let mut opts = opts;
-        opts.validate();
-        Cloner { opts }
+        opts.validate()?;
+        Ok(Cloner { opts })
     }
 
-    pub async fn git_clone(self) -> Result<()> {
-        let mut project_keys = self.opts.git_opts.project_keys();
-
-        let bb = Bitbucket {
-            opts: self.opts.bitbucket_opts.clone(),
-        };
-        let mut repos: Vec<Repo> = match bb.fetch_all().await {
+    pub async fn clone_projects(self) -> Result<()> {
+        let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
+        let repos: Vec<Repo> = match bb.fetch_all_project_repos().await {
             Ok(r) => r,
-            Err(e) => {
-                println!("Failed getting password from env. {}", e.msg);
-                std::process::exit(1);
-            }
+            Err(e) => bail(&format!("Failed fetching project repos. {}", e.msg))?,
         };
+        self.clone_repos(repos).await?;
+        Ok(())
+    }
+
+    pub async fn clone_users(self) -> Result<()> {
+        let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
+        let repos: Vec<Repo> = match bb.fetch_all_user_repos().await {
+            Ok(r) => r,
+            Err(e) => bail(&format!("Failed fetching user repos. {}", e.msg))?,
+        };
+        self.clone_repos(repos).await?;
+        Ok(())
+    }
+
+    async fn clone_repos(self, mut repos: Vec<Repo>) -> Result<()> {
+        let mut project_keys = self.opts.git_opts.project_keys();
         if self.opts.interactive() && !self.opts.git_opts.clone_all && project_keys.is_empty() {
             project_keys = select_projects(&repos);
         }
@@ -62,7 +70,6 @@ mod tests {
     use super::*;
 
     #[tokio::test]
-    #[ignore] // TODO fix test
     async fn cloner_integration_test() {
         let opts = CloneOpts {
             batch_mode: true,
@@ -84,7 +91,7 @@ mod tests {
                 output_directory: ".".to_owned(),
             },
         };
-        match Cloner::new(opts).git_clone().await {
+        match Cloner::new(opts).unwrap().clone_projects().await {
             Ok(_) => assert!(
                 false,
                 "GitHub.com should never be available as a bitbucket server"
