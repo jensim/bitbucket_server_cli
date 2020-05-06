@@ -16,7 +16,7 @@ async fn main() -> std::result::Result<(), Box<dyn std::error::Error>> {
 async fn act() -> Result<()> {
     let opts: Opts = Opts::from_args();
     match opts {
-        Opts::Clone(c) => Cloner::new(c)?.clone_projects().await,
+        Opts::CloneProjects(c) => Cloner::new(c)?.clone_projects().await,
         Opts::CloneUsers(c) => Cloner::new(c)?.clone_users().await,
         Opts::Completions => gen_completions(),
     }
