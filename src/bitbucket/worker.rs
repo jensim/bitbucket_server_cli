@@ -1,5 +1,5 @@
 use futures::stream::{self, StreamExt};
-use generic_error::{Result, GenericError};
+use generic_error::{GenericError, Result};
 use reqwest::{header::ACCEPT, Client as ReqwestClient, RequestBuilder};
 use serde::de::DeserializeOwned;
 
@@ -42,9 +42,10 @@ impl BitbucketWorker {
                 eprintln!("Failed loading project repos due to '{}'", msg);
                 Ok(u)
             }
-            (Err(user_e), Err(project_e)) => {
-                bail(&format!("Failed loading user repos due to '{}'. Failed loading project repos due to '{}'", user_e.msg, project_e.msg))
-            }
+            (Err(user_e), Err(project_e)) => bail(&format!(
+                "Failed loading user repos due to '{}'. Failed loading project repos due to '{}'",
+                user_e.msg, project_e.msg
+            )),
         }
     }
 
@@ -68,7 +69,12 @@ impl BitbucketWorker {
     where
         T: RepoUrlBuilder,
     {
-        let keys: Vec<String> = self.opts.project_keys.iter().map(|k|k.to_lowercase()).collect();
+        let keys: Vec<String> = self
+            .opts
+            .project_keys
+            .iter()
+            .map(|k| k.to_lowercase())
+            .collect();
         let fetch_result: Vec<BitbucketResult<Vec<Repo>>> = stream::iter(
             all_projects
                 .iter()
@@ -207,7 +213,7 @@ mod tests {
             )),
             clone_type: CloneType::HTTP,
             project_keys: vec!["key".to_owned()],
-            all: false
+            all: false,
         }
     }
 

@@ -91,17 +91,17 @@ pub struct BitBucketOpts {
     )]
     pub clone_type: CloneType,
     #[structopt(
-    short = "k",
-    long = "key",
-    name = "git_project_keys",
-    help = "BitBucket Project keys",
+        short = "k",
+        long = "key",
+        name = "git_project_keys",
+        help = "BitBucket Project keys"
     )]
     pub project_keys: Vec<String>,
     #[structopt(
         short = "A",
         long = "all",
         name = "bitbucket_all",
-        help = "Clone all projects",
+        help = "Clone all projects"
     )]
     pub all: bool,
 }
