@@ -88,6 +88,7 @@ pub struct ProjDesc {
 
 pub trait RepoUrlBuilder: std::fmt::Debug {
     fn get_repos_url(&self, host: &str) -> String;
+    fn get_filter_key(&self) -> String;
 }
 
 impl RepoUrlBuilder for ProjDesc {
@@ -97,6 +98,10 @@ impl RepoUrlBuilder for ProjDesc {
             host = host,
             key = &self.key
         )
+    }
+
+    fn get_filter_key(&self) -> String {
+        self.key.to_lowercase()
     }
 }
 
@@ -151,6 +156,10 @@ impl RepoUrlBuilder for UserResult {
             slug = self.slug
         )
     }
+
+    fn get_filter_key(&self) -> String {
+        format!("~{}",self.slug.to_lowercase())
+    }
 }
 
 #[cfg(test)]
@@ -200,6 +209,8 @@ mod tests {
             verbose: false,
             password_from_env: false,
             clone_type: CloneType::HttpSavedLogin,
+            project_keys: vec!["key".to_owned()],
+            all: false
         };
         let vec1 = prjs.get_clone_links(&opts);
         assert_eq!(vec1.len(), 1, "Wrong number of output Repo objects");
@@ -221,6 +232,8 @@ mod tests {
             verbose: false,
             password_from_env: false,
             clone_type: CloneType::HTTP,
+            project_keys: vec!["key".to_owned()],
+            all: false
         };
         let vec1 = prjs.get_clone_links(&opts);
         assert_eq!(vec1.len(), 1);

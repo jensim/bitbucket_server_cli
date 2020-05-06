@@ -17,6 +17,7 @@ pub fn select_projects(repos: &[Repo]) -> Vec<String> {
             project_keys.push(r.project_key.clone());
         }
     }
+    project_keys.sort();
     let mut db = get_db();
     let previous: Vec<String> = db
         .get(PROMPT_BB_PROJECT_SOME.db_key)

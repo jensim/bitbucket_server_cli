@@ -17,6 +17,16 @@ impl Cloner {
         Ok(Cloner { opts })
     }
 
+    pub async fn clone_projects_and_users(self) -> Result<()> {
+        let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
+        let repos: Vec<Repo> = match bb.fetch_all_repos().await {
+            Ok(r) => r,
+            Err(e) => bail(&format!("Failed fetching user & project repos. {}", e.msg))?,
+        };
+        self.clone_repos(repos).await?;
+        Ok(())
+    }
+
     pub async fn clone_projects(self) -> Result<()> {
         let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
         let repos: Vec<Repo> = match bb.fetch_all_project_repos().await {
@@ -38,12 +48,12 @@ impl Cloner {
     }
 
     async fn clone_repos(self, mut repos: Vec<Repo>) -> Result<()> {
-        let mut project_keys = self.opts.git_opts.project_keys();
-        if self.opts.interactive() && !self.opts.git_opts.clone_all && project_keys.is_empty() {
+        let mut project_keys = self.opts.bitbucket_opts.project_keys();
+        if self.opts.interactive() && !self.opts.bitbucket_opts.all && project_keys.is_empty() {
             project_keys = select_projects(&repos);
         }
 
-        if !self.opts.git_opts.clone_all && !project_keys.is_empty() {
+        if !self.opts.bitbucket_opts.all && !project_keys.is_empty() {
             let mut tmp_vec = Vec::new();
             for r in repos {
                 if project_keys.contains(&r.project_key) {
@@ -81,10 +91,10 @@ mod tests {
                 password_from_env: false,
                 username: Some("Admin".to_owned()),
                 clone_type: CloneType::HTTP,
+                project_keys: vec![],
+                all: true,
             },
             git_opts: GitOpts {
-                clone_all: true,
-                project_keys: vec![],
                 reset_state: false,
                 concurrency: 1,
                 quiet: false,

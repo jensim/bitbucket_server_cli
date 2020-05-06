@@ -42,10 +42,10 @@ fn opts() -> Result<CloneOpts> {
             verbose: true,
             password_from_env: false,
             clone_type: CloneType::SSH,
+            all: false,
+            project_keys: vec![env("BITBUCKET_PROJECT")?],
         },
         git_opts: GitOpts {
-            clone_all: false,
-            project_keys: vec![env("BITBUCKET_PROJECT")?],
             reset_state: false,
             concurrency: 5,
             quiet: false,
@@ -117,7 +117,7 @@ async fn test_http() {
 #[tokio::test]
 async fn test_user_http() {
     let mut opts: CloneOpts = opts().unwrap();
-    opts.git_opts.project_keys = vec![env("BITBUCKET_USER").unwrap()];
+    opts.bitbucket_opts.project_keys = vec![env("BITBUCKET_USER").unwrap()];
     let output_directory = opts.git_opts.output_directory.clone();
     assert!(
         std::fs::create_dir_all(&output_directory).is_ok(),

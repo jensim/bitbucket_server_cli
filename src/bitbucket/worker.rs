@@ -1,5 +1,5 @@
 use futures::stream::{self, StreamExt};
-use generic_error::Result;
+use generic_error::{Result, GenericError};
 use reqwest::{header::ACCEPT, Client as ReqwestClient, RequestBuilder};
 use serde::de::DeserializeOwned;
 
@@ -26,6 +26,28 @@ impl BitbucketWorker {
         BitbucketWorker { opts }
     }
 
+    pub async fn fetch_all_repos(&self) -> Result<Vec<Repo>> {
+        let user_repos = self.fetch_all_user_repos().await;
+        let project_repos = self.fetch_all_project_repos().await;
+        match (user_repos, project_repos) {
+            (Ok(mut u), Ok(mut p)) => {
+                u.append(&mut p);
+                Ok(u)
+            }
+            (Err(GenericError { msg }), Ok(p)) => {
+                eprintln!("Failed loading user repos due to '{}'", msg);
+                Ok(p)
+            }
+            (Ok(u), Err(GenericError { msg })) => {
+                eprintln!("Failed loading project repos due to '{}'", msg);
+                Ok(u)
+            }
+            (Err(user_e), Err(project_e)) => {
+                bail(&format!("Failed loading user repos due to '{}'. Failed loading project repos due to '{}'", user_e.msg, project_e.msg))
+            }
+        }
+    }
+
     pub async fn fetch_all_project_repos(&self) -> Result<Vec<Repo>> {
         match self.fetch_all_projects().await {
             Ok(all_projects) => Ok(self.fetch_all(all_projects).await?),
@@ -46,9 +68,11 @@ impl BitbucketWorker {
     where
         T: RepoUrlBuilder,
     {
+        let keys: Vec<String> = self.opts.project_keys.iter().map(|k|k.to_lowercase()).collect();
         let fetch_result: Vec<BitbucketResult<Vec<Repo>>> = stream::iter(
             all_projects
                 .iter()
+                .filter(|t| keys.is_empty() || keys.contains(&t.get_filter_key()))
                 .map(|project| async move { self.fetch_one_project(project).await }),
         )
         .buffer_unordered(self.opts.concurrency)
@@ -74,6 +98,7 @@ impl BitbucketWorker {
     }
 
     async fn fetch_all_users(&self) -> BitbucketResult<Vec<UserResult>> {
+        println!("Started fetching users..");
         let host = self.opts.server.clone().unwrap();
         let url = format!("{}/rest/api/1.0/users?limit=5000", host);
 
@@ -84,6 +109,7 @@ impl BitbucketWorker {
     }
 
     async fn fetch_all_projects(&self) -> BitbucketResult<Vec<ProjDesc>> {
+        println!("Started fetching projects..");
         let host = self.opts.server.clone().unwrap();
         let url = format!("{}/rest/api/1.0/projects?limit=100000", host);
 
@@ -180,6 +206,8 @@ mod tests {
                 path = format!("{}", random_string(12))
             )),
             clone_type: CloneType::HTTP,
+            project_keys: vec!["key".to_owned()],
+            all: false
         }
     }
 
