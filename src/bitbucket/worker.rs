@@ -1,13 +1,16 @@
+use std::borrow::BorrowMut;
+
 use futures::stream::{self, StreamExt};
 use generic_error::{GenericError, Result};
 use reqwest::{header::ACCEPT, Client as ReqwestClient, RequestBuilder};
 use serde::de::DeserializeOwned;
 
 use crate::bitbucket::types::{
-    AllProjects, AllUsersResult, ProjDesc, Projects, Repo, RepoUrlBuilder, UserResult,
+    get_clone_links, PageResponse, ProjDesc, Project, Repo, RepoUrlBuilder, UserResult,
 };
 use crate::types::BitBucketOpts;
 use crate::util::bail;
+use indicatif::ProgressStyle;
 
 pub type BitbucketResult<T> = std::result::Result<T, BitbucketError>;
 
@@ -50,22 +53,28 @@ impl BitbucketWorker {
     }
 
     pub async fn fetch_all_project_repos(&self) -> Result<Vec<Repo>> {
-        match self.fetch_all_projects().await {
-            Ok(all_projects) => Ok(self.fetch_all(all_projects).await?),
+        match self
+            .fetch_all_paginated::<ProjDesc>("projects", "/rest/api/1.0/projects")
+            .await
+        {
+            Ok(all_projects) => Ok(self.fetch_all("projects", all_projects).await?),
             Err(e) if self.opts.verbose => bail(&format!("{}\nCause: {}", e.msg, e.cause))?,
             Err(e) => bail(&e.msg)?,
         }
     }
 
     pub async fn fetch_all_user_repos(&self) -> Result<Vec<Repo>> {
-        match self.fetch_all_users().await {
-            Ok(all_users) => Ok(self.fetch_all(all_users).await?),
+        match self
+            .fetch_all_paginated::<UserResult>("users", "/rest/api/1.0/users")
+            .await
+        {
+            Ok(all_users) => Ok(self.fetch_all("users", all_users).await?),
             Err(e) if self.opts.verbose => bail(&format!("{}\nCause: {}", e.msg, e.cause))?,
             Err(e) => bail(&e.msg)?,
         }
     }
 
-    async fn fetch_all<T>(&self, all_projects: Vec<T>) -> Result<Vec<Repo>>
+    async fn fetch_all<T>(&self, naming: &str, all_projects: Vec<T>) -> Result<Vec<Repo>>
     where
         T: RepoUrlBuilder,
     {
@@ -75,16 +84,30 @@ impl BitbucketWorker {
             .iter()
             .map(|k| k.to_lowercase())
             .collect();
-        let fetch_result: Vec<BitbucketResult<Vec<Repo>>> = stream::iter(
-            all_projects
-                .iter()
-                .filter(|t| keys.is_empty() || keys.contains(&t.get_filter_key()))
-                .map(|project| async move { self.fetch_one_project(project).await }),
-        )
-        .buffer_unordered(self.opts.concurrency)
-        .collect::<Vec<BitbucketResult<Vec<Repo>>>>()
-        .await;
-
+        let filtered_projects: Vec<&T> = all_projects
+            .iter()
+            .filter(|t| keys.is_empty() || keys.contains(&t.get_filter_key()))
+            .collect();
+        let progress_bar = indicatif::ProgressBar::new(filtered_projects.len() as u64);
+        let bar_style = "[{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} (eta:{eta})";
+        progress_bar.set_style(
+            ProgressStyle::default_bar()
+                .template(&format!("Fetching {} {}", naming, bar_style))
+                .progress_chars("#>-"),
+        );
+        let fetch_result: Vec<BitbucketResult<Vec<Repo>>> =
+            stream::iter(filtered_projects.iter().map(|project| {
+                let progress_bar = progress_bar.clone();
+                async move {
+                    let r = self.fetch_one_project(*project).await;
+                    progress_bar.inc(1);
+                    r
+                }
+            }))
+            .buffer_unordered(self.opts.concurrency)
+            .collect::<Vec<BitbucketResult<Vec<Repo>>>>()
+            .await;
+        progress_bar.finish();
         let mut all: Vec<Repo> = Vec::new();
         for response in fetch_result {
             match response {
@@ -103,40 +126,39 @@ impl BitbucketWorker {
         Ok(all)
     }
 
-    async fn fetch_all_users(&self) -> BitbucketResult<Vec<UserResult>> {
-        println!("Started fetching users..");
+    async fn fetch_all_paginated<T>(&self, naming: &str, path: &str) -> BitbucketResult<Vec<T>>
+    where
+        T: DeserializeOwned,
+    {
         let host = self.opts.server.clone().unwrap();
-        let url = format!("{}/rest/api/1.0/users?limit=5000", host);
-
-        let response: reqwest::Result<reqwest::Response> = self.bake_client(url).send().await;
-        Ok(extract_body::<AllUsersResult>(response, "users")
-            .await?
-            .values)
-    }
-
-    async fn fetch_all_projects(&self) -> BitbucketResult<Vec<ProjDesc>> {
-        println!("Started fetching projects..");
-        let host = self.opts.server.clone().unwrap();
-        let url = format!("{}/rest/api/1.0/projects?limit=100000", host);
-
-        let response: reqwest::Result<reqwest::Response> = self.bake_client(url).send().await;
-        Ok(extract_body::<AllProjects>(response, "projects")
-            .await?
-            .values)
+        let mut start: u32 = 0;
+        let mut sum: Vec<T> = vec![];
+        loop {
+            let url = format!(
+                "{host}{path}?limit=500&start={start}",
+                host = host,
+                path = path,
+                start = start
+            );
+            let response: reqwest::Result<reqwest::Response> = self.bake_client(url).send().await;
+            let mut resp = extract_body::<PageResponse<T>>(response, naming).await?;
+            sum.append(resp.values.borrow_mut());
+            start += resp.size;
+            if resp.is_last_page {
+                break;
+            }
+        }
+        Ok(sum)
     }
 
     async fn fetch_one_project<T>(&self, project: &T) -> BitbucketResult<Vec<Repo>>
     where
         T: RepoUrlBuilder,
     {
-        let host = self.opts.server.clone().unwrap().to_lowercase();
-        let url = project.get_repos_url(&host);
-        let result: reqwest::Result<reqwest::Response> = self.bake_client(url).send().await;
-        Ok(
-            extract_body::<Projects>(result, &format!("project {:?}", project))
-                .await?
-                .get_clone_links(&self.opts),
-        )
+        let path = project.get_repos_path();
+        let projects: Vec<Project> = self.fetch_all_paginated("project", &path).await?;
+        let repos = get_clone_links(projects, &self.opts);
+        Ok(repos)
     }
 
     fn bake_client(&self, url: String) -> RequestBuilder {
@@ -191,6 +213,7 @@ mod tests {
     use rand::distributions::Alphanumeric;
     use rand::{thread_rng, Rng};
 
+    use crate::bitbucket::types::ProjDesc;
     use crate::types::CloneType;
 
     use super::*;
@@ -221,7 +244,7 @@ mod tests {
     async fn fetch_one_bad_host_is_dns_error() {
         // given
         let project: ProjDesc = ProjDesc {
-            key: "KEY".to_owned(),
+            key: "key".to_owned(),
         };
         let bit_bucket_opts = basic_opts();
         let worker = BitbucketWorker::new(bit_bucket_opts);
@@ -234,8 +257,7 @@ mod tests {
             Ok(_) => assert!(false, "This request was expected to fail."),
             Err(e) => {
                 assert_eq!(
-                    e.msg,
-                    format!("Failed fetching project {:?} from bitbucket.", &project),
+                    e.msg, "Failed fetching project from bitbucket.",
                     "Unexpected error message. Was '{}'",
                     e.msg
                 );

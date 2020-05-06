@@ -3,48 +3,36 @@ use generic_error::Result;
 use crate::types::{BitBucketOpts, CloneType};
 use crate::util::bail;
 
-#[derive(Deserialize, Debug)]
-pub struct AllProjects {
-    pub values: Vec<ProjDesc>,
-}
-
-#[derive(Deserialize, Debug)]
-pub struct Projects {
-    pub values: Vec<Project>,
-}
-
-impl Projects {
-    pub fn get_clone_links(&self, opts: &BitBucketOpts) -> Vec<Repo> {
-        let mut links: Vec<Repo> = Vec::new();
-        let clone_type: &str = match opts.clone_type {
-            CloneType::HTTP => "http",
-            CloneType::HttpSavedLogin => "http",
-            CloneType::SSH => "ssh",
-        };
-        for value in &self.values {
-            for clone_link in &value.links.clone {
-                if value.state.trim() == "AVAILABLE"
-                    && value.scm_id.trim() == "git"
-                    && clone_link.name.trim() == clone_type
+pub fn get_clone_links(projects: Vec<Project>, opts: &BitBucketOpts) -> Vec<Repo> {
+    let mut links: Vec<Repo> = Vec::new();
+    let clone_type: &str = match opts.clone_type {
+        CloneType::HTTP => "http",
+        CloneType::HttpSavedLogin => "http",
+        CloneType::SSH => "ssh",
+    };
+    for value in projects {
+        for clone_link in &value.links.clone {
+            if value.state.trim() == "AVAILABLE"
+                && value.scm_id.trim() == "git"
+                && clone_link.name.trim() == clone_type
+            {
+                let mut git = clone_link.href.clone();
+                if let (CloneType::HttpSavedLogin, Some(user), Some(pass)) =
+                    (&opts.clone_type, &opts.username, &opts.password)
                 {
-                    let mut git = clone_link.href.clone();
-                    if let (CloneType::HttpSavedLogin, Some(user), Some(pass)) =
-                        (&opts.clone_type, &opts.username, &opts.password)
-                    {
-                        if let Ok(git_with_user) = add_user_to_url(&git, user, pass) {
-                            git = git_with_user;
-                        }
+                    if let Ok(git_with_user) = add_user_to_url(&git, user, pass) {
+                        git = git_with_user;
                     }
-                    links.push(Repo {
-                        project_key: value.project.key.to_lowercase(),
-                        name: value.slug.to_lowercase(),
-                        git,
-                    });
                 }
+                links.push(Repo {
+                    project_key: value.project.key.to_lowercase(),
+                    name: value.slug.to_lowercase(),
+                    git,
+                });
             }
         }
-        links
     }
+    links
 }
 
 fn add_user_to_url(url: &str, user: &str, pass: &str) -> Result<String> {
@@ -87,17 +75,13 @@ pub struct ProjDesc {
 }
 
 pub trait RepoUrlBuilder: std::fmt::Debug {
-    fn get_repos_url(&self, host: &str) -> String;
+    fn get_repos_path(&self) -> String;
     fn get_filter_key(&self) -> String;
 }
 
 impl RepoUrlBuilder for ProjDesc {
-    fn get_repos_url(&self, host: &str) -> String {
-        format!(
-            "{host}/rest/api/latest/projects/{key}/repos?limit=5000",
-            host = host,
-            key = &self.key
-        )
+    fn get_repos_path(&self) -> String {
+        format!("/rest/api/latest/projects/{}/repos", &self.key)
     }
 
     fn get_filter_key(&self) -> String {
@@ -132,11 +116,11 @@ pub struct GitResult {
 
 #[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
-pub struct AllUsersResult {
+pub struct PageResponse<T> {
     pub is_last_page: bool,
     pub size: u32,
     pub limit: u32,
-    pub values: Vec<UserResult>,
+    pub values: Vec<T>,
 }
 
 #[serde(rename_all = "camelCase")]
@@ -149,12 +133,8 @@ pub struct UserResult {
 }
 
 impl RepoUrlBuilder for UserResult {
-    fn get_repos_url(&self, host: &str) -> String {
-        format!(
-            "{host}/rest/api/1.0/users/{slug}/repos",
-            host = host,
-            slug = self.slug
-        )
+    fn get_repos_path(&self) -> String {
+        format!("/rest/api/1.0/users/{}/repos", self.slug)
     }
 
     fn get_filter_key(&self) -> String {
@@ -212,7 +192,7 @@ mod tests {
             project_keys: vec!["key".to_owned()],
             all: false,
         };
-        let vec1 = prjs.get_clone_links(&opts);
+        let vec1 = get_clone_links(prjs, &opts);
         assert_eq!(vec1.len(), 1, "Wrong number of output Repo objects");
         assert_eq!(
             vec1[0].git,
@@ -235,12 +215,12 @@ mod tests {
             project_keys: vec!["key".to_owned()],
             all: false,
         };
-        let vec1 = prjs.get_clone_links(&opts);
+        let vec1 = get_clone_links(prjs, &opts);
         assert_eq!(vec1.len(), 1);
         assert_eq!(vec1[0].git, repo_str);
     }
 
-    fn from(repo_str: &str, clone_type: CloneType) -> Projects {
+    fn from(repo_str: &str, clone_type: CloneType) -> Vec<Project> {
         let clone_type = match clone_type {
             CloneType::SSH => "ssh",
             CloneType::HTTP => "http",
@@ -258,6 +238,6 @@ mod tests {
             },
             project: ProjDesc { key: String::new() },
         };
-        Projects { values: vec![prj] }
+        vec![prj]
     }
 }
