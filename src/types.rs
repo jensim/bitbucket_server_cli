@@ -17,6 +17,7 @@ use dialoguer::Confirm;
     about = "Clone a thousand repos, and keep em up to date, no problem."
 )]
 pub enum Opts {
+    Clone(CloneOpts),
     CloneProjects(CloneOpts),
     CloneUsers(CloneOpts),
     Completions,
@@ -89,24 +90,24 @@ pub struct BitBucketOpts {
     default_value = "ssh"
     )]
     pub clone_type: CloneType,
+    #[structopt(
+    short = "k",
+    long = "key",
+    name = "git_project_keys",
+    help = "BitBucket Project keys",
+    )]
+    pub project_keys: Vec<String>,
+    #[structopt(
+        short = "A",
+        long = "all",
+        name = "bitbucket_all",
+        help = "Clone all projects",
+    )]
+    pub all: bool,
 }
 
 #[derive(StructOpt, Clone, Debug)]
 pub struct GitOpts {
-    #[structopt(
-        short = "A",
-        long = "all",
-        name = "git_clone_all",
-        help = "Clone all projects"
-    )]
-    pub clone_all: bool,
-    #[structopt(
-        short = "k",
-        long = "key",
-        name = "git_project_keys",
-        help = "BitBucket Project keys"
-    )]
-    pub project_keys: Vec<String>,
     #[structopt(
         short = "R",
         long = "reset",
@@ -165,15 +166,15 @@ impl CloneOpts {
                 }
                 _ => None,
             };
-            self.git_opts.clone_all = self.git_opts.clone_all
-                || (self.git_opts.project_keys.is_empty()
+            self.bitbucket_opts.all = self.bitbucket_opts.all
+                || (self.bitbucket_opts.project_keys().is_empty()
                     && get_bool(&PROMPT_BB_PROJECT_ALL, false));
         }
         self.do_create_output_dir()?;
         if self.bitbucket_opts.server.is_none() {
             bail("Server is required")?;
-        } else if !self.git_opts.clone_all
-            && self.git_opts.project_keys.is_empty()
+        } else if !self.bitbucket_opts.all
+            && self.bitbucket_opts.project_keys().is_empty()
             && self.batch_mode
         {
             bail("project selection is required (all or keys)")?;
@@ -223,7 +224,7 @@ impl CloneOpts {
     }
 }
 
-impl GitOpts {
+impl BitBucketOpts {
     pub fn project_keys(&self) -> Vec<String> {
         self.project_keys
             .iter()
