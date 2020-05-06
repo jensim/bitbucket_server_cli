@@ -40,7 +40,7 @@ jobs:
     - certutil -hashfile bitbucket_server_cli-${TRAVIS_OS_NAME}.tgz sha256
     - popd
 
-install: cargo build --release --verbose
+install: cargo build --release --tests --bins --examples --color=always
 
 script: cargo test --release --verbose --lib
 

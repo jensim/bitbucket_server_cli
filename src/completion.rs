@@ -8,6 +8,11 @@ use structopt::StructOpt;
 use crate::types::Opts;
 use crate::util::bail;
 
+# [cfg(target_os = "windows")]
+const HOME_VAR: &str = "USERPROFILE";
+# [cfg(not(target_os = "windows"))]
+const HOME_VAR: &str = "HOME";
+
 pub fn gen_completions() -> Result<()> {
     let mut app: clap::App = Opts::clap();
     if confirm("Do you want to generate completions for bitbucket_server_cli?")? {
@@ -101,18 +106,67 @@ fn get_shell_selection() -> Result<Shell> {
 }
 
 fn get_default_completion_location(shell: Shell) -> Result<Option<String>> {
-    let home = std::env::var("HOME");
+    let home = std::env::var(HOME_VAR);
     match (shell, home) {
-        (Shell::Zsh, Ok(home)) => Ok(Some(format!("{}/.oh-my-zsh/completions", home))),
-        (Shell::Fish, Ok(home)) => Ok(Some(format!("{}/.config/fish/completions", home))),
-        (Shell::Bash, _) => Ok(Some("/usr/local/share/bash-completion".to_owned())),
+        (Shell::Zsh, Ok(home)) => Ok(join_path(&[&home,".oh-my-zsh", "completions"])),
+        (Shell::Fish, Ok(home)) => Ok(join_path(&[&home,".config","fish","completions"])),
+        (Shell::Bash, _) => Ok(join_path(&["/usr","local","share","bash-completion"])),
         (Shell::PowerShell, Ok(home)) => {
-            Ok(Some(format!(r"{}\Documents\WindowsPowerShell\", home)))
+            Ok(join_path(&[&home,"Documents","WindowsPowerShell"]))
         }
         (_, Err(e)) => {
-            eprintln!("Failed reading HOME variable due to {:?}", e);
+            eprintln!("Failed reading {} variable due to {:?}", HOME_VAR, e);
             Ok(None)
         }
         (_, Ok(_)) => Ok(None),
+    }
+}
+
+fn join_path(parts: &[&str]) -> Option<String> {
+    let mut path = Path::new(parts[0]).to_path_buf();
+    for part in parts[1..].to_vec() {
+        path.push(part);
+    }
+    path.to_str().map(|s|s.to_owned())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    #[ignore]
+    fn test_home(){
+        let home = std::env::var(HOME_VAR).unwrap();
+        #[cfg(target_os = "windows")]
+        assert!(home.to_lowercase().starts_with(r"c:\"));
+        #[cfg(not(target_os = "windows"))]
+        assert!(home.starts_with("/"));
+    }
+
+    #[test]
+    fn test_join_path() {
+        let home = std::env::var(HOME_VAR).unwrap();
+        #[cfg(not(target_os = "windows"))]
+        {
+            assert_eq!(join_path(&[&home, "foo"]).unwrap(), format!("{}/foo", home))
+        }
+        #[cfg(target_os = "windows")]
+        {
+            assert_eq!(join_path(&[&home, "foo"]).unwrap(), format!(r"{}\foo", home))
+        }
+    }
+
+    #[test]
+    fn test_shell_default_location() {
+        let home = std::env::var(HOME_VAR).unwrap();
+        #[cfg(not(target_os = "windows"))]
+        {
+            assert_eq!(get_default_completion_location(Shell::Zsh).unwrap().unwrap(), format!("{}/.oh-my-zsh/completions", home));
+        }
+        #[cfg(target_os = "windows")]
+        {
+            assert_eq!(get_default_completion_location(Shell::PowerShell).unwrap().unwrap(), format!(r"{}\Documents\WindowsPowerShell", home));
+        }
     }
 }
