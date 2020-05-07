@@ -18,7 +18,7 @@ impl Cloner {
     }
 
     pub async fn clone_projects_and_users(self) -> Result<()> {
-        let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
+        let bb = BitbucketWorker::new(&self.opts.bitbucket_opts);
         let repos: Vec<Repo> = match bb.fetch_all_repos().await {
             Ok(r) => r,
             Err(e) => bail(&format!("Failed fetching user & project repos. {}", e.msg))?,
@@ -28,7 +28,7 @@ impl Cloner {
     }
 
     pub async fn clone_projects(self) -> Result<()> {
-        let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
+        let bb = BitbucketWorker::new(&self.opts.bitbucket_opts);
         let repos: Vec<Repo> = match bb.fetch_all_project_repos().await {
             Ok(r) => r,
             Err(e) => bail(&format!("Failed fetching project repos. {}", e.msg))?,
@@ -38,7 +38,7 @@ impl Cloner {
     }
 
     pub async fn clone_users(self) -> Result<()> {
-        let bb = BitbucketWorker::new(self.opts.bitbucket_opts.clone());
+        let bb = BitbucketWorker::new(&self.opts.bitbucket_opts);
         let repos: Vec<Repo> = match bb.fetch_all_user_repos().await {
             Ok(r) => r,
             Err(e) => bail(&format!("Failed fetching user repos. {}", e.msg))?,
@@ -62,12 +62,7 @@ impl Cloner {
             }
             repos = tmp_vec;
         }
-        Git {
-            opts: self.opts.git_opts,
-            repos,
-        }
-        .git_going()
-        .await;
+        Git::new(&repos, &self.opts.git_opts).git_going().await;
 
         Ok(())
     }

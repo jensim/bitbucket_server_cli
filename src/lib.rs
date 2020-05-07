@@ -12,5 +12,4 @@ mod bitbucket;
 pub mod completion;
 mod git;
 mod input;
-mod prompts;
 pub mod util;

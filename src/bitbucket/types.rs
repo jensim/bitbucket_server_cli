@@ -3,7 +3,7 @@ use generic_error::Result;
 use crate::types::{BitBucketOpts, CloneType};
 use crate::util::bail;
 
-pub fn get_clone_links(projects: Vec<Project>, opts: &BitBucketOpts) -> Vec<Repo> {
+pub fn get_clone_links(projects: &[Project], opts: &BitBucketOpts) -> Vec<Repo> {
     let mut links: Vec<Repo> = Vec::new();
     let clone_type: &str = match opts.clone_type {
         CloneType::HTTP => "http",
@@ -192,7 +192,7 @@ mod tests {
             project_keys: vec!["key".to_owned()],
             all: false,
         };
-        let vec1 = get_clone_links(prjs, &opts);
+        let vec1 = get_clone_links(&prjs, &opts);
         assert_eq!(vec1.len(), 1, "Wrong number of output Repo objects");
         assert_eq!(
             vec1[0].git,
@@ -215,7 +215,7 @@ mod tests {
             project_keys: vec!["key".to_owned()],
             all: false,
         };
-        let vec1 = get_clone_links(prjs, &opts);
+        let vec1 = get_clone_links(&prjs, &opts);
         assert_eq!(vec1.len(), 1);
         assert_eq!(vec1[0].git, repo_str);
     }

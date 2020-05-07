@@ -20,12 +20,12 @@ pub struct BitbucketError {
 }
 
 #[derive(Clone)]
-pub struct BitbucketWorker {
-    opts: BitBucketOpts,
+pub struct BitbucketWorker<'a> {
+    opts: &'a BitBucketOpts,
 }
 
-impl BitbucketWorker {
-    pub fn new(opts: BitBucketOpts) -> BitbucketWorker {
+impl BitbucketWorker<'_> {
+    pub fn new(opts: &BitBucketOpts) -> BitbucketWorker {
         BitbucketWorker { opts }
     }
 
@@ -157,7 +157,7 @@ impl BitbucketWorker {
     {
         let path = project.get_repos_path();
         let projects: Vec<Project> = self.fetch_all_paginated("project", &path).await?;
-        let repos = get_clone_links(projects, &self.opts);
+        let repos = get_clone_links(&projects, &self.opts);
         Ok(repos)
     }
 
@@ -166,7 +166,7 @@ impl BitbucketWorker {
             .get(url.trim())
             .header(ACCEPT, "application/json");
         match (&self.opts.username, &self.opts.password) {
-            (Some(u), Some(p)) => builder.basic_auth(u.clone(), Some(p.clone())),
+            (Some(u), Some(p)) => builder.basic_auth(u, Some(p)),
             _ => builder,
         }
     }
@@ -247,7 +247,7 @@ mod tests {
             key: "key".to_owned(),
         };
         let bit_bucket_opts = basic_opts();
-        let worker = BitbucketWorker::new(bit_bucket_opts);
+        let worker = BitbucketWorker::new(&bit_bucket_opts);
 
         // when
         let result = worker.fetch_one_project(&project).await;
@@ -277,7 +277,7 @@ mod tests {
         };
         let mut bit_bucket_opts = basic_opts();
         bit_bucket_opts.server = Some("http://bitbucket.com/This_Will_Never_Work".to_owned());
-        let worker = BitbucketWorker::new(bit_bucket_opts);
+        let worker = BitbucketWorker::new(&bit_bucket_opts);
 
         // when
         let result = worker.fetch_one_project(&project).await;

@@ -4,10 +4,8 @@ use clap::arg_enum;
 use generic_error::Result;
 use structopt::StructOpt;
 
+use crate::input::prompts::{PROMPT_BB_PROJECT_ALL, PROMPT_BB_SERVER, PROMPT_BB_USERNAME};
 use crate::input::{get_bool, get_password, get_with_default, password_from_env};
-use crate::prompts::{
-    PROMPT_BB_PASSWORD, PROMPT_BB_PROJECT_ALL, PROMPT_BB_SERVER, PROMPT_BB_USERNAME,
-};
 use crate::util::bail;
 use dialoguer::Confirm;
 
@@ -70,7 +68,7 @@ pub struct BitBucketOpts {
         long = "concurrent_http",
         name = "bitbucket_concurrency",
         help = "Number of concurrent http requests towards bitbucket. Keep it sane, keep bitbucket alive for all. Max=100",
-        default_value = "10"
+        default_value = "20"
     )]
     pub concurrency: usize,
     #[structopt(
@@ -125,7 +123,7 @@ pub struct GitOpts {
         long = "concurrent_git",
         name = "git_concurrency",
         help = "Number of concurrent git actions. Bitbucket might have a limited number of threads reserved for serving git requests - if you drive this value to high you might block your CI, colleagues or even crash bitbucket. Max=100",
-        default_value = "3"
+        default_value = "5"
     )]
     pub concurrency: usize,
     #[structopt(
@@ -165,9 +163,7 @@ impl CloneOpts {
             self.bitbucket_opts.password = match self.bitbucket_opts.username {
                 None => None,
                 Some(_) if self.bitbucket_opts.password_from_env => None,
-                Some(_) if self.bitbucket_opts.password.is_none() => {
-                    get_password(&PROMPT_BB_PASSWORD)
-                }
+                Some(_) if self.bitbucket_opts.password.is_none() => get_password(),
                 _ => None,
             };
             self.bitbucket_opts.all = self.bitbucket_opts.all

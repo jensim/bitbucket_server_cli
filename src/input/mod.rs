@@ -5,8 +5,10 @@ use generic_error::Result;
 use pickledb::{PickleDb, PickleDbDumpPolicy, SerializationMethod};
 
 use crate::bitbucket::types::Repo;
-use crate::prompts::{Prompt, PROMPT_BB_PROJECT_SOME};
+use crate::input::prompts::{Prompt, PROMPT_BB_PASSWORD, PROMPT_BB_PROJECT_SOME};
 use crate::util::bail;
+
+pub mod prompts;
 
 const PROP_FILE: &str = ".bitbucket_server_cli.db";
 
@@ -77,7 +79,11 @@ pub fn get_db() -> PickleDb {
     })
 }
 
-pub fn get_password(prompt: &Prompt) -> Option<String> {
+pub fn get_password() -> Option<String> {
+    get_password_1(&PROMPT_BB_PASSWORD)
+}
+
+pub fn get_password_1(prompt: &Prompt) -> Option<String> {
     let password = Password::with_theme(&ColorfulTheme::default())
         .with_prompt(prompt.prompt_str)
         .allow_empty_password(true)
