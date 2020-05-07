@@ -13,6 +13,8 @@ BitBucket Server Cli
 ![State](https://img.shields.io/badge/maintenance-working_but_experimental-blue.svg)
 ![Maintenance](https://img.shields.io/maintenance/yes/2020)
 
+[![Screen recording](https://img.youtube.com/vi/9tVrG6uoUeM/0.jpg)](https://www.youtube.com/watch?v=9tVrG6uoUeM)
+
 * [Install](#install)
   * [OSX](#osx)
   * [Linux](#linux)
