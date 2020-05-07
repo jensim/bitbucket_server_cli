@@ -68,13 +68,13 @@ pub fn get_db() -> PickleDb {
     PickleDb::load(
         PROP_FILE,
         PickleDbDumpPolicy::AutoDump,
-        SerializationMethod::Yaml,
+        SerializationMethod::Json,
     )
     .unwrap_or_else(|_| {
         PickleDb::new(
             PROP_FILE,
             PickleDbDumpPolicy::AutoDump,
-            SerializationMethod::Yaml,
+            SerializationMethod::Json,
         )
     })
 }

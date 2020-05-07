@@ -10,6 +10,8 @@ use crate::bitbucket::types::{
 };
 use crate::types::BitBucketOpts;
 use crate::util::bail;
+#[allow(unused_imports)]
+use futures::SinkExt as _;
 use indicatif::ProgressStyle;
 
 pub type BitbucketResult<T> = std::result::Result<T, BitbucketError>;
