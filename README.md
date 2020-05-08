@@ -1,14 +1,18 @@
 BitBucket Server Cli
 ----
 
-[![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
 [![Travis-Build](https://travis-ci.org/jensim/bitbucket_server_cli.svg?branch=master)](https://travis-ci.org/jensim/bitbucket_server_cli)
+[![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
+[![Rust audit](https://github.com/jensim/bitbucket_server_cli/workflows/Rust%20audit/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3A%22Rust+audit%22)
 
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
+![warnings forbidden](https://img.shields.io/badge/warnings-forbidden-success.svg)
 
 ![Crates.io](https://img.shields.io/crates/l/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/v/bitbucket_server_cli)
 ![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)
+[![Homebrew](https://img.shields.io/badge/HomeBrew-repo-blue)](https://github.com/jensim/homebrew-bitbucket_server_cli/)
+[![Linuxbrew](https://img.shields.io/badge/LinuxBrew-repo-red)](https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/)
 
 ![State](https://img.shields.io/badge/maintenance-working_but_experimental-blue.svg)
 ![Maintenance](https://img.shields.io/maintenance/yes/2020)
