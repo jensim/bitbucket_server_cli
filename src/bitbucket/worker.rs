@@ -1,34 +1,40 @@
 use std::borrow::BorrowMut;
 
+use atomic_counter::{AtomicCounter, RelaxedCounter};
 use futures::stream::{self, StreamExt};
+#[allow(unused_imports)]
+use futures::SinkExt as _;
 use generic_error::{GenericError, Result};
+use indicatif::ProgressStyle;
 use reqwest::{header::ACCEPT, Client as ReqwestClient, RequestBuilder};
 use serde::de::DeserializeOwned;
+use tokio::time::delay_for;
 
 use crate::bitbucket::types::{
     get_clone_links, PageResponse, ProjDesc, Project, Repo, RepoUrlBuilder, UserResult,
 };
 use crate::types::BitBucketOpts;
 use crate::util::bail;
-#[allow(unused_imports)]
-use futures::SinkExt as _;
-use indicatif::ProgressStyle;
 
 pub type BitbucketResult<T> = std::result::Result<T, BitbucketError>;
 
 pub struct BitbucketError {
+    is_timeout: bool,
     msg: String,
     cause: String,
 }
 
-#[derive(Clone)]
 pub struct BitbucketWorker<'a> {
     opts: &'a BitBucketOpts,
+    timeout_counter: RelaxedCounter,
 }
 
 impl BitbucketWorker<'_> {
     pub fn new(opts: &BitBucketOpts) -> BitbucketWorker {
-        BitbucketWorker { opts }
+        BitbucketWorker {
+            opts,
+            timeout_counter: RelaxedCounter::new(0),
+        }
     }
 
     pub async fn fetch_all_repos(&self) -> Result<Vec<Repo>> {
@@ -125,6 +131,10 @@ impl BitbucketWorker<'_> {
                 }
             };
         }
+        let timeouts = self.timeout_counter.get();
+        if timeouts > 0 {
+            eprintln!("There were {} timeouts towards bitbucket.", timeouts);
+        }
         Ok(all)
     }
 
@@ -135,20 +145,51 @@ impl BitbucketWorker<'_> {
         let host = self.opts.server.clone().unwrap();
         let mut start: u32 = 0;
         let mut sum: Vec<T> = vec![];
-        loop {
+        'outer: loop {
             let url = format!(
                 "{host}{path}?limit=500&start={start}",
                 host = host,
                 path = path,
                 start = start
             );
-            let response: reqwest::Result<reqwest::Response> = self.bake_client(url).send().await;
-            let mut resp = extract_body::<PageResponse<T>>(response, naming).await?;
-            sum.append(resp.values.borrow_mut());
-            start += resp.size;
-            if resp.is_last_page {
-                break;
+            for attempt in 1..self.opts.retries + 2 {
+                let response: reqwest::Result<reqwest::Response> =
+                    self.bake_client(&url).send().await;
+                match extract_body::<PageResponse<T>>(response, naming).await {
+                    Ok(mut resp) => {
+                        sum.append(resp.values.borrow_mut());
+                        if resp.is_last_page {
+                            break 'outer;
+                        } else {
+                            start += resp.size;
+                            continue 'outer;
+                        }
+                    }
+                    Err(e) if e.is_timeout => {
+                        let count = self.timeout_counter.inc();
+                        if attempt > self.opts.retries {
+                            // Last chance blown!
+                            return Err(e);
+                        } else if let Some(Some(backoff)) =
+                            self.opts.backoff.map(|b| b.checked_mul((count + 1) as u32))
+                        {
+                            delay_for(backoff).await;
+                        }
+                    }
+                    Err(e) => {
+                        return Err(e);
+                    }
+                }
             }
+            // To be sure we dont escape some case into an endless retry-loop
+            return Err(BitbucketError {
+                is_timeout: true,
+                msg: format!(
+                    "Failed to read from bitbucket with {} retries.",
+                    self.opts.retries
+                ),
+                cause: "Timeouts against bitbucket.".to_owned(),
+            });
         }
         Ok(sum)
     }
@@ -163,9 +204,10 @@ impl BitbucketWorker<'_> {
         Ok(repos)
     }
 
-    fn bake_client(&self, url: String) -> RequestBuilder {
+    fn bake_client(&self, url: &str) -> RequestBuilder {
         let builder: RequestBuilder = ReqwestClient::new()
-            .get(url.trim())
+            .get(url)
+            .timeout(self.opts.timeout)
             .header(ACCEPT, "application/json");
         match (&self.opts.username, &self.opts.password) {
             (Some(u), Some(p)) => builder.basic_auth(u, Some(p)),
@@ -184,7 +226,13 @@ where
     match response {
         Ok(response) if response.status().is_success() => match response.json::<T>().await {
             Ok(all_projects) => Ok(all_projects),
+            Err(e) if e.is_timeout() => Err(BitbucketError {
+                is_timeout: true,
+                msg: "Timeout reading from bitbucket.".to_owned(),
+                cause: format!("{:?}", e),
+            }),
             Err(e) => Err(BitbucketError {
+                is_timeout: e.is_timeout(),
                 msg: format!(
                     "Failed fetching {} from bitbucket, bad json format.",
                     naming
@@ -193,6 +241,7 @@ where
             }),
         },
         Ok(response) => Err(BitbucketError {
+            is_timeout: false,
             msg: format!(
                 "Failed fetching {} from bitbucket, status code: {}.",
                 naming,
@@ -204,6 +253,7 @@ where
             },
         }),
         Err(e) => Err(BitbucketError {
+            is_timeout: e.is_timeout(),
             msg: format!("Failed fetching {} from bitbucket.", naming),
             cause: format!("{:?}", e),
         }),
@@ -212,6 +262,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::time::Duration;
+
     use rand::distributions::Alphanumeric;
     use rand::{thread_rng, Rng};
 
@@ -239,6 +291,9 @@ mod tests {
             clone_type: CloneType::HTTP,
             project_keys: vec!["key".to_owned()],
             all: false,
+            timeout: Duration::from_secs(10),
+            retries: 0,
+            backoff: None,
         }
     }
 
@@ -288,8 +343,9 @@ mod tests {
         match result {
             Ok(_) => assert!(false, "This request was expected to fail."),
             Err(e) => assert!(
-                e.msg.contains(format!("status code: {}", 404).as_str()),
-                "Response code should be 404."
+                e.msg.contains("status code: 404"),
+                "Response code should be 404, but was {:?}",
+                e.cause
             ),
         }
     }

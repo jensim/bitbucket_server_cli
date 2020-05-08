@@ -10,6 +10,7 @@ use bitbucket_server_cli::{
     cloner::Cloner,
     types::{BitBucketOpts, CloneType, GitOpts},
 };
+use std::time::Duration;
 
 fn env(key: &str) -> Result<String> {
     match std::env::var(key) {
@@ -43,7 +44,10 @@ fn opts() -> Result<CloneOpts> {
             password_from_env: false,
             clone_type: CloneType::SSH,
             all: false,
+            timeout: Duration::from_secs(1),
+            retries: 0,
             project_keys: vec![env("BITBUCKET_PROJECT")?],
+            backoff: None,
         },
         git_opts: GitOpts {
             reset_state: false,

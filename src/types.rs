@@ -8,6 +8,7 @@ use crate::input::prompts::{PROMPT_BB_PROJECT_ALL, PROMPT_BB_SERVER, PROMPT_BB_U
 use crate::input::{get_bool, get_password, get_with_default, password_from_env};
 use crate::util::bail;
 use dialoguer::Confirm;
+use std::time::Duration;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
@@ -65,7 +66,7 @@ pub struct BitBucketOpts {
     pub password: Option<String>,
     #[structopt(
         short = "b",
-        long = "concurrent_http",
+        long = "concurrent-http",
         name = "bitbucket_concurrency",
         help = "Number of concurrent http requests towards bitbucket. Keep it sane, keep bitbucket alive for all. Max=100",
         default_value = "20"
@@ -73,19 +74,20 @@ pub struct BitBucketOpts {
     pub concurrency: usize,
     #[structopt(
         short = "H",
-        long = "http_verbose",
+        long = "http-verbose",
         name = "bitbucket_verbose",
         help = "Output full http response on failed bitbucket requests."
     )]
     pub verbose: bool,
     #[structopt(
         short = "W",
-        long = "env_password",
+        long = "env-password",
         name = "bitbucket_password_from_env",
         help = "Try get password from env variable BITBUCKET_PASSWORD.\nTry it out without showing your password:\nIFS= read -rs BITBUCKET_PASSWORD < /dev/tty  && export BITBUCKET_PASSWORD\n"
     )]
     pub password_from_env: bool,
-    #[structopt(long = "clone_type",
+    #[structopt(
+        long = "clone-type",
         name = "clone_type",
         possible_values = & CloneType::variants(),
         case_insensitive = true,
@@ -96,7 +98,7 @@ pub struct BitBucketOpts {
         short = "k",
         long = "key",
         name = "git_project_keys",
-        help = "BitBucket Project keys"
+        help = "BitBucket Project keys (applicable multiple times)"
     )]
     pub project_keys: Vec<String>,
     #[structopt(
@@ -106,6 +108,25 @@ pub struct BitBucketOpts {
         help = "Clone all projects"
     )]
     pub all: bool,
+    #[structopt(
+        long = "http-timeout",
+        help = "HTTP timout, 2min4sec6milli8micro3nano combine freely with or without abbreviations or spaces.",
+        default_value = "2.5 sec",
+        parse(try_from_str = parse_duration::parse),
+    )]
+    pub timeout: Duration,
+    #[structopt(
+        long,
+        help = "Retries to attempt requesting on timeout from bitbucket.",
+        default_value = "2"
+    )]
+    pub retries: u32,
+    #[structopt(
+        long = "http-backoff",
+        help = "Linear backoff time per failed request.\nie. 10 timed out requests and backoff=10ms -> 100ms backoff on next timed out request\nor {prior_timeouts}*{backoff}={delay_on_next_timeout}",
+        parse(try_from_str = parse_duration::parse),
+    )]
+    pub backoff: Option<Duration>,
 }
 
 #[derive(StructOpt, Clone, Debug)]
@@ -120,7 +141,7 @@ pub struct GitOpts {
     pub reset_state: bool,
     #[structopt(
         short = "g",
-        long = "concurrent_git",
+        long = "concurrent-git",
         name = "git_concurrency",
         help = "Number of concurrent git actions. Bitbucket might have a limited number of threads reserved for serving git requests - if you drive this value to high you might block your CI, colleagues or even crash bitbucket. Max=100",
         default_value = "5"
@@ -128,13 +149,13 @@ pub struct GitOpts {
     pub concurrency: usize,
     #[structopt(
         short = "Q",
-        long = "git_quiet",
+        long = "git-quiet",
         name = "git_quiet",
         help = "Suppress warnings from failed git actions."
     )]
     pub quiet: bool,
     #[structopt(
-        long = "output_directory",
+        long = "output-directory",
         help = "Suppress warnings from failed git actions.",
         default_value = "."
     )]
@@ -230,5 +251,17 @@ impl BitBucketOpts {
             .iter()
             .map(|key| key.to_lowercase())
             .collect()
+    }
+}
+#[cfg(test)]
+mod test {
+    use super::*;
+
+    #[test]
+    fn test_multi_time_parse() {
+        assert_eq!(
+            parse_duration::parse("2.5s500ms").unwrap(),
+            Duration::from_secs(3)
+        )
     }
 }

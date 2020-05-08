@@ -73,6 +73,7 @@ mod tests {
     use crate::types::{BitBucketOpts, CloneType, GitOpts};
 
     use super::*;
+    use std::time::Duration;
 
     #[tokio::test]
     async fn cloner_integration_test() {
@@ -88,6 +89,9 @@ mod tests {
                 clone_type: CloneType::HTTP,
                 project_keys: vec![],
                 all: true,
+                timeout: Duration::from_secs(5),
+                retries: 2,
+                backoff: None,
             },
             git_opts: GitOpts {
                 reset_state: false,
