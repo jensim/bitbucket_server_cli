@@ -1,3 +1,14 @@
+#### Usage
+```
+$> bitbucket_server_cli clone-users   
+BitBucket server address: http://localhost
+BitBucket username: jensim
+✔ BitBucket password · ********
+Clone/update all projects yes
+Fetching users [00:00:15] [########################################] 1337/1337 (eta:0s)
+Working repos [00:00:03] [########################################] 68/68 (eta:0s)
+```
+#### Help
 ```
 bitbucket_server_cli-clone-users 0.3.13
 Clone users
@@ -42,14 +53,4 @@ OPTIONS:
             HTTP timout, 2min4sec6milli8micro3nano combine freely with or without abbreviations or spaces. [default: 2.5
             sec]
 
-```
-Use:
-```
-$> bitbucket_server_cli clone-users   
-BitBucket server address: http://localhost
-BitBucket username: jensim
-✔ BitBucket password · ********
-Clone/update all projects yes
-Fetching users [00:00:15] [########################################] 1337/1337 (eta:0s)
-Working repos [00:00:03] [########################################] 68/68 (eta:0s)
 ```

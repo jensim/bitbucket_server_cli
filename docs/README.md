@@ -2,6 +2,7 @@ Bitbucket server CLI
 ---
 
 - [Main readme](../README.md)
+- [Usage](#usage)
 - [Help](#help)
   - [clone projects](help/clone-projects.md)
   - [clone users](help/clone-users.md)
@@ -10,6 +11,19 @@ Bitbucket server CLI
   - [GitHub releases](https://github.com/jensim/bitbucket_server_cli/releases)
   - [![Homebrew](https://img.shields.io/badge/HomeBrew-repo-blue)](https://github.com/jensim/homebrew-bitbucket_server_cli/)
   - [![Linuxbrew](https://img.shields.io/badge/LinuxBrew-repo-red)](https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/)
+
+#### Usage
+
+```
+$> bitbucket_server_cli clone      
+BitBucket server address: http://localhost
+BitBucket username: jensim
+✔ BitBucket password · ********
+Clone/update all projects yes
+Fetching users [00:00:15] [########################################] 2011/2011 (eta:0s)
+Fetching projects [00:00:00] [########################################] 35/35 (eta:0s)
+Working repos [00:01:07] [########################################] 1337/1337 (eta:0s)
+```
 
 #### Help
 
