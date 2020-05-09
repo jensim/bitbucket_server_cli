@@ -14,10 +14,5 @@ cargo clippy
 
 cargo build --tests --bins --examples --color=always
 
-[[ ! -f .env ]] && cp .env_default .env
-set -o allexport
-[[ -f .env ]] && source .env
-set +o allexport
-
 cd "${WORKDIR}/integration_test"
 ./run_integration_test.sh
