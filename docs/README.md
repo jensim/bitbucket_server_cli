@@ -1,7 +1,7 @@
 Bitbucket server CLI
 ---
 
-- [Main readme](../README.md)
+- [Main readme](MainReadme.md)
 - [Usage](#usage)
 - [Help](#help)
   - [clone projects](help/clone-projects.md)
