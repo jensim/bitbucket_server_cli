@@ -1,7 +1,7 @@
 Bitbucket server CLI
 ---
 
-- [Main readme](MainReadme.md)
+- [GitHub repo](https://github.com/jensim/bitbucket_server_cli/)
 - [Usage](#usage)
 - [Help](#help)
   - [clone projects](help/clone-projects.md)
