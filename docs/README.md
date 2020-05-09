@@ -2,14 +2,16 @@ Bitbucket server CLI
 ---
 
 - [Main readme](../README.md)
-- Help
+- [Help](#help)
   - [clone projects](help/clone-projects.md)
   - [clone users](help/clone-users.md)
   - [generate completions](help/generate-completions.md)
 - Distributions
-  - GitHub releases
-  - HomeBrew
-  - LinuxBrew 
+  - [GitHub releases](https://github.com/jensim/bitbucket_server_cli/releases)
+  - [![Homebrew](https://img.shields.io/badge/HomeBrew-repo-blue)](https://github.com/jensim/homebrew-bitbucket_server_cli/)
+  - [![Linuxbrew](https://img.shields.io/badge/LinuxBrew-repo-red)](https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/)
+
+#### Help
 
 ```
 BitBucket Server Cli 0.3.13
