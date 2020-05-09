@@ -11,6 +11,7 @@ Bitbucket server CLI
   - [GitHub releases](https://github.com/jensim/bitbucket_server_cli/releases)
   - [![Homebrew](https://img.shields.io/badge/HomeBrew-repo-blue)](https://github.com/jensim/homebrew-bitbucket_server_cli/)
   - [![Linuxbrew](https://img.shields.io/badge/LinuxBrew-repo-red)](https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/)
+- [Ideas/Plans](Ideas.md)
 
 #### Usage
 
