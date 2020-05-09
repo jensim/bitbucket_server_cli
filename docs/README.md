@@ -14,6 +14,8 @@ Bitbucket server CLI
 
 #### Usage
 
+[![Screen recording](https://img.youtube.com/vi/9tVrG6uoUeM/0.jpg)](https://www.youtube.com/watch?v=9tVrG6uoUeM)
+
 ```
 $> bitbucket_server_cli clone      
 BitBucket server address: http://localhost
