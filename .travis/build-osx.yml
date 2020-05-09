@@ -1,0 +1,9 @@
+import:
+  - source: build-common.yml
+    mode: deep_merge_append
+
+jobs:
+  include:
+    - stage: Build
+      name: MacOS Build
+      os: osx

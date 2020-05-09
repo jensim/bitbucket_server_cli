@@ -1,0 +1,14 @@
+{
+  "size": 1,
+  "limit": 1,
+  "isLastPage": false,
+  "values": [
+    {
+      "key": "ARCHIVE",
+      "id": 1,
+      "name": "Archive",
+      "public": true,
+      "type": "NORMAL"
+    }
+  ]
+}

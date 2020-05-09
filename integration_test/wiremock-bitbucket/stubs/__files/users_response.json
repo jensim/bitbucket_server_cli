@@ -1,0 +1,16 @@
+{
+  "size": 1,
+  "limit": 10,
+  "isLastPage": true,
+  "values": [
+    {
+      "name": "jensim",
+      "emailAddress": "jensim@bitbucket.se",
+      "displayName": "Jens",
+      "id": 11,
+      "active": true,
+      "slug": "jensim",
+      "type": "NORMAL"
+    }
+  ]
+}

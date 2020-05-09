@@ -1,0 +1,32 @@
+import:
+  - source: common.yml
+    mode: deep_merge_append
+
+env:
+  global:
+    - secure: P1r76h3zV3hHkRLTIWKmeRqAb3hOe9r51tqUzTweqUq7TCq89LXtoWlqff/zxtjFOuSZfPaJlRncLl+4bBCB/C+ksBRYyRS3joViazW9ik9aVc6NUmrJEgBvzCxNfeepLNt46VWFYZtAjiripNHdNYXzcB/4lWYCsitU0dcHww3zvhJy04lwl+qCUs+3kJqP3BP/Yt+VQjq5jQbyFVxtX3RyesWCkHf+5q4P+dRJCpUzt6sK9IWxIX/DbuSvN4ip+g0kiSH4udmUB5CsWCAfdwiyfEe4Yw6yeN8/4HphuWIioeqc4whEoClBxUQzYflOeaR76i7LYDLDj+t2EcZbE74SMUHQrfM28Hbi4uNBTVgKnuUyOsTNXDMcB8ALURI3gtQrpPSdfzmhrBqCeXyCpRgjgXwuTH59MSHhqqPYTxbz/gjTSPe0aijV3Hr2mPtS0NjLYP6wvfrArAs3umWke1gKfpvH+DtqP7aiU+mHhbrWP7FDIiKKeV0OGqVCOXHaj0hh9p4IAftuo4lKj1xX8oSsBI6YQOhF+bPOWdrI4KBYiCTFZY3aePx7XmRmjgO9yB8H560A6pkYeTCRaD36aPaxIKa5X15hjeNRXKpPJ/mXJ5gDl6DZnmagdZftIrqqcuejwB8I2Cqz8S5dlQ+o87/pljIdjz5WUNzG95wKL94=
+
+install: cargo build --release --verbose
+
+script: cargo test --release --verbose --lib
+
+before_deploy:
+  - pushd target/release
+  - tar -czvf "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz" "bitbucket_server_cli"
+  - shasum -a 256 "bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz"
+  - popd
+
+deploy:
+  provider: releases
+  token: "${GH_TOKEN}"
+  file: target/release/bitbucket_server_cli-${TRAVIS_OS_NAME}.tar.gz
+  name: Draft-travis-${TRAVIS_BUILD_NUMBER}
+  edge: true
+  cleanup: false
+  draft: true
+  file_glob: true
+  overwrite: true
+  #release_notes: "[![Build Status](https://api.travis-ci.org/jensim/bitbucket_server_cli.svg?commit=${TRAVIS_COMMIT})](https://travis-ci.org/jensim/bitbucket_server_cli/builds/${TRAVIS_BUILD_ID})"
+  on:
+    branch: master
+    tags: false

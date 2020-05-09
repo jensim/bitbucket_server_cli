@@ -12,9 +12,9 @@ pub fn get_clone_links(projects: &[Project], opts: &BitBucketOpts) -> Vec<Repo> 
     };
     for value in projects {
         for clone_link in &value.links.clone {
-            if value.state.trim() == "AVAILABLE"
-                && value.scm_id.trim() == "git"
-                && clone_link.name.trim() == clone_type
+            if value.state.trim().to_lowercase() == "available"
+                && value.scm_id.trim().to_lowercase() == "git"
+                && clone_link.name.trim().to_lowercase() == clone_type
             {
                 let mut git = clone_link.href.clone();
                 if let (CloneType::HttpSavedLogin, Some(user), Some(pass)) =
@@ -81,7 +81,7 @@ pub trait RepoUrlBuilder: std::fmt::Debug {
 
 impl RepoUrlBuilder for ProjDesc {
     fn get_repos_path(&self) -> String {
-        format!("/rest/api/latest/projects/{}/repos", &self.key)
+        format!("/rest/api/1.0/projects/{}/repos", &self.key.to_lowercase())
     }
 
     fn get_filter_key(&self) -> String {
@@ -134,7 +134,7 @@ pub struct UserResult {
 
 impl RepoUrlBuilder for UserResult {
     fn get_repos_path(&self) -> String {
-        format!("/rest/api/1.0/users/{}/repos", self.slug)
+        format!("/rest/api/1.0/users/{}/repos", self.slug.to_lowercase())
     }
 
     fn get_filter_key(&self) -> String {

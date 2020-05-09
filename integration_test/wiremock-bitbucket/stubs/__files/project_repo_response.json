@@ -1,0 +1,36 @@
+{
+  "size": 1,
+  "limit": 10,
+  "isLastPage": true,
+  "values": [
+    {
+      "slug": "linuxbrew-bitbucket_server_cli",
+      "id": 211,
+      "name": "linuxbrew-bitbucket_server_cli",
+      "scmId": "git",
+      "state": "AVAILABLE",
+      "statusMessage": "Available",
+      "forkable": true,
+      "project": {
+        "key": "ACTIVE",
+        "id": 1337,
+        "public": false,
+        "name": "Active",
+        "type": "NORMAL"
+      },
+      "public": false,
+      "links": {
+        "clone": [
+          {
+            "href": "https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux.git",
+            "name": "http"
+          },
+          {
+            "href": "ssh://git@github.com/jensim/linuxbrew-bitbucket_server_cli-linux.git",
+            "name": "ssh"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "size": 1,
+  "limit": 10,
+  "isLastPage": true,
+  "values": [
+    {
+      "slug": "homebrew-bitbucket_server_cli",
+      "id": 21,
+      "name": "homebrew-bitbucket_server_cli",
+      "scmId": "git",
+      "state": "AVAILABLE",
+      "statusMessage": "Available",
+      "forkable": true,
+      "project": {
+        "key": "~JENSIM",
+        "id": 1337,
+        "name": "jensim",
+        "type": "PERSONAL",
+        "owner": {
+          "name": "jensim",
+          "emailAddress": "jensim@bitbucket.se",
+          "id": 392,
+          "displayName": "jensim",
+          "active": true,
+          "slug": "jensim",
+          "type": "NORMAL"
+        }
+      },
+      "public": false,
+      "links": {
+        "clone": [
+          {
+            "href": "https://github.com/jensim/homebrew-bitbucket_server_cli.git",
+            "name": "http"
+          },
+          {
+            "href": "ssh://git@github.com/jensim/homebrew-bitbucket_server_cli.git",
+            "name": "ssh"
+          }
+        ]
+      }
+    }
+  ]
+}

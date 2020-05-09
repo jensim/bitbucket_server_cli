@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/rest/api/1.0/projects/active/repos?limit=500&start=0"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "../__files/project_repo_response.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

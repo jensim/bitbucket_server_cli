@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/rest/api/1.0/projects?limit=500&start=1"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "../__files/projects_response_2.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

@@ -28,6 +28,7 @@ jobs:
     - cargo clippy
     - cargo audit
     - cargo test --release --verbose --lib
+    - ./integration_test/run_integration_test.sh
   - stage: Build
     name: MacOS Build
     os: osx
@@ -42,7 +43,9 @@ jobs:
 
 install: cargo build --release --tests --bins --examples --color=always
 
-script: cargo test --release --verbose --lib
+script:
+- cargo test --release --verbose --lib
+- ./integration_test/run_integration_test.sh
 
 before_deploy:
 - pushd target/release

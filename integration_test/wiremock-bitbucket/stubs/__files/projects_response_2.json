@@ -1,0 +1,14 @@
+{
+  "size": 1,
+  "limit": 1,
+  "isLastPage": true,
+  "values": [
+    {
+      "key": "ACTIVE",
+      "id": 2,
+      "name": "Active",
+      "public": true,
+      "type": "NORMAL"
+    }
+  ]
+}

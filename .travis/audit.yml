@@ -1,0 +1,3 @@
+import:
+  - source: common.yml
+    mode: deep_merge_append

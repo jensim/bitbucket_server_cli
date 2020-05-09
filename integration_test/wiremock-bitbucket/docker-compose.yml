@@ -1,0 +1,9 @@
+version: '3.4'
+services:
+  mock-bitbucket:
+    image: 'rodolpheche/wiremock'
+    container_name: 'mock-bitbucket'
+    volumes:
+    - $PWD/stubs:/home/wiremock
+    ports:
+    - 8080:8080

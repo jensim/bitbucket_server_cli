@@ -19,8 +19,5 @@ set -o allexport
 [[ -f .env ]] && source .env
 set +o allexport
 
-echo "Enter Bitbucket password: "
-IFS= read -rs BITBUCKET_PASSWORD < /dev/tty
-export BITBUCKET_PASSWORD
-
-cargo test --verbose --color=always
+cd "${WORKDIR}/integration_test"
+./run_integration_test.sh
