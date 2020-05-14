@@ -1,5 +1,9 @@
 Ideas:
 ----
+-[ ] Disaster recovery
+  - Set up all projects
+  - Set up all repos
+  - Push all history 
 -[ ] Set up integration-test bitbucket server
 -[ ] `Prune` subcommand, remove directories not found in bitbucket
 -[ ] Separate `Structopt`-structs from valid domain structs and contain that logic
