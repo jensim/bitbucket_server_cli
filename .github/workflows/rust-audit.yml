@@ -2,7 +2,7 @@ name: Rust audit
 
 on:
   schedule:
-    - cron: '40 8 * * *' # run at 2 AM UTC
+    - cron: '0 2 * * *' # run at 2 AM UTC
   push:
     paths:
       - '**/Cargo.toml'
