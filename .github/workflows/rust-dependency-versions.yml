@@ -1,0 +1,25 @@
+name: Rust dependency versions
+
+on:
+  schedule:
+    - cron: '0 2 * * *' # run at 2 AM UTC
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  check-dependency-versions:
+    runs-on: ubuntu-latest
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    steps:
+      - uses: actions/checkout@v2
+      - name: Install cargo-edit
+        run: cargo install --force cargo-edit
+      - name: Perform dependency version check
+        run: |
+          if [[ $(cargo upgrade --dry-run | tail -1) != "bitbucket_server_cli:" ]]; then
+              echo "There are version upgrades available"
+              cargo upgrade --dry-run
+              exit 1
+          fi
