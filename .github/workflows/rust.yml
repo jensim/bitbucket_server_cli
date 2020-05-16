@@ -2,7 +2,12 @@ name: Rust
 
 on:
   push:
-    branches: [ '**' ]
+    paths:
+      - '**/Cargo.toml'
+      - 'Cargo.lock'
+      - '**/*.rs'
+      - '.github/workflows/*.yml'
+      - 'integration_test/**'
   pull_request:
     branches: [ master ]
 
