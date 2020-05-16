@@ -285,8 +285,8 @@ mod tests {
             verbose: true,
             server: Some(format!(
                 "http://{host}.p2/{path}",
-                host = format!("{}", random_string(12)),
-                path = format!("{}", random_string(12))
+                host = random_string(12),
+                path = random_string(12)
             )),
             clone_type: CloneType::HTTP,
             project_keys: vec!["key".to_owned()],
@@ -311,7 +311,7 @@ mod tests {
 
         // then
         match result {
-            Ok(_) => assert!(false, "This request was expected to fail."),
+            Ok(_) => panic!("This request was expected to fail."),
             Err(e) => {
                 assert_eq!(
                     e.msg, "Failed fetching project from bitbucket.",
@@ -341,7 +341,7 @@ mod tests {
 
         // then
         match result {
-            Ok(_) => assert!(false, "This request was expected to fail."),
+            Ok(_) => panic!("This request was expected to fail."),
             Err(e) => assert!(
                 e.msg.contains("status code: 404"),
                 "Response code should be 404, but was {:?}",

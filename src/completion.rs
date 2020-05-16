@@ -139,7 +139,7 @@ mod tests {
         #[cfg(target_os = "windows")]
         assert!(home.to_lowercase().starts_with(r"c:\"));
         #[cfg(not(target_os = "windows"))]
-        assert!(home.starts_with("/"));
+        assert!(home.starts_with('/'));
     }
 
     #[test]

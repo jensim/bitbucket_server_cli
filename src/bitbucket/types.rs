@@ -169,7 +169,7 @@ mod tests {
             "admin",
             "password123",
         )
-        .unwrap_or("error".to_owned());
+        .unwrap_or_else(|_| "error".to_owned());
 
         assert_eq!(
             "http://admin:password123@localhost:7990/something.git", &added,
@@ -239,7 +239,7 @@ mod tests {
             state: "AVAILABLE".to_string(),
             links: Links {
                 clone: vec![CloneLink {
-                    name: format!("{}", clone_type).to_lowercase(),
+                    name: clone_type.to_lowercase(),
                     href: repo_str.to_owned(),
                 }],
             },

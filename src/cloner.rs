@@ -101,10 +101,7 @@ mod tests {
             },
         };
         match Cloner::new(opts).unwrap().clone_projects().await {
-            Ok(_) => assert!(
-                false,
-                "GitHub.com should never be available as a bitbucket server"
-            ),
+            Ok(_) => panic!("GitHub.com should never be available as a bitbucket server"),
             Err(e) => println!("{}", e.msg),
         }
     }

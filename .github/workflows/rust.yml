@@ -2,21 +2,48 @@ name: Rust
 
 on:
   push:
-    branches: [ master ]
+    branches: [ '**' ]
   pull_request:
     branches: [ master ]
 
 jobs:
-  build:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macOS-latest]
+        rust: [stable, nightly, beta]
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.rust }}
+      - uses: actions/checkout@v2
+      - name: Build
+        run: cargo build --examples --lib --bins
+      - name: Test
+        run: cargo test --verbose --examples --lib --bins
+  clippy:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --tests --bins --examples
-    - name: Run tests
-      run: cargo test --verbose --lib
-    - name: Format
-      run: cargo fmt --all -- --check
-    - name: Bug hunt & best practice
-      run: cargo clippy
+      - uses: actions/checkout@v2
+      - name: Install clippy
+        run: rustup component add clippy
+      - name: Run clippy
+        run: cargo clippy --all-targets -- --deny clippy::all
+  fmt:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        rust: [stable, beta]
+    if: "!contains(github.event.head_commit.message, 'ci skip')"
+    steps:
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: ${{ matrix.rust }}
+      - uses: actions/checkout@v2
+      - name: Install rustfmt
+        run: rustup component add rustfmt
+      - name: Run rustfmt
+        run: cargo fmt -- --check
