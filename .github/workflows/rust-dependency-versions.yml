@@ -4,7 +4,9 @@ on:
   schedule:
     - cron: '0 2 * * *' # run at 2 AM UTC
   push:
-    branches: [ '**' ]
+    paths:
+      - '**/Cargo.toml'
+      - 'Cargo.lock'
   pull_request:
     branches: [ master ]
 
