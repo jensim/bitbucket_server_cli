@@ -2,21 +2,18 @@ name: Rust audit
 
 on:
   schedule:
-    - cron: '0 2 * * *' # run at 2 AM UTC
+    - cron: '40 8 * * *' # run at 2 AM UTC
   push:
-    branches: [ master ]
-  pull_request:
-    branches: [ master ]
+    paths:
+      - '**/Cargo.toml'
+      - 'Cargo.lock'
 
 jobs:
-  audit:
+  security_audit:
     runs-on: ubuntu-latest
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     steps:
-    - uses: actions/checkout@v2
-    - name: Install cargo-audit
-      run: cargo install --force cargo-audit
-    - name: Generate lockfile
-      run: cargo generate-lockfile
-    - name: Perform audit
-      run: cargo audit
+      - uses: actions/checkout@v2
+      - uses: actions-rs/audit-check@v1.2.0
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
