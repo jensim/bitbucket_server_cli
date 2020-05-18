@@ -1,6 +1,6 @@
 [package]
 name = "bitbucket_server_cli"
-version = "0.3.13"
+version = "0.3.14"
 authors = ["Jens Brimfors <jens.brimfors@gmail.se>"]
 edition = "2018"
 license = "MIT"
