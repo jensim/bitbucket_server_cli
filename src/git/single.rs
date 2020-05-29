@@ -23,7 +23,6 @@ impl SingleGit<'_, '_> {
             self.git_update().await?;
         } else {
             self.git_clone().await?;
-            self.git_reset().await?;
         }
         Ok(())
     }
@@ -53,7 +52,7 @@ impl SingleGit<'_, '_> {
         let path = Path::new(&string_path);
 
         let fail_suffix = "failed git pull";
-        match exec("git pull --ff-only", path).await {
+        match exec("git pull --autostash --ff-only --rebase", path).await {
             Ok(o) if o.status.success() => Ok(()),
             Ok(o) if !o.status.success() => {
                 self.generate_repo_err_from_output(fail_suffix, o.stdout, o.stderr)
