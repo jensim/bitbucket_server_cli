@@ -24,6 +24,13 @@ jobs:
         with:
           rust-version: ${{ matrix.rust }}
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: ${{ runner.os }}-${{ runner.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Build
         run: cargo build --examples --lib --bins
       - name: Test
@@ -33,6 +40,13 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+          with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            key: ${{ runner.os }}-${{ runner.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: "Run integration test"
         run: integration_test/run_integration_test.sh
   clippy:
@@ -40,6 +54,13 @@ jobs:
     if: "!contains(github.event.head_commit.message, 'ci skip')"
     steps:
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+          with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            key: cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install clippy
         run: rustup component add clippy
       - name: Run clippy
@@ -55,6 +76,13 @@ jobs:
         with:
           rust-version: ${{ matrix.rust }}
       - uses: actions/checkout@v2
+      - uses: actions/cache@v2
+          with:
+            path: |
+              ~/.cargo/registry
+              ~/.cargo/git
+              target
+            key: ${{ runner.os }}-${{ runner.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
       - name: Install rustfmt
         run: rustup component add rustfmt
       - name: Run rustfmt
