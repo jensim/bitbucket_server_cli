@@ -8,10 +8,16 @@ cargo install --path . --force
 
 cd "${PRJ_ROOT}/integration_test/wiremock-bitbucket"
 docker-compose up -d
-until curl -f http://localhost:8080/some/thing 2>/dev/null; do
+wait_until="$(( $(date +%s) + 60 ))"
+until curl -s -f http://localhost:8080/some/thing > /dev/null 2>&1 ; do
+  if [ "$(date +%s)" -gt "$wait_until" ] ; then
+    echo >&2 "Wiremock is unavailable - timed out"
+    exit 1
+  fi
   echo >&2 "Wiremock is unavailable - sleeping"
   sleep 1
 done
+echo >&2 "Wiremock is available - testing"
 
 cd /tmp
 rm -rf my_hot_repos
