@@ -28,7 +28,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: test-${{ matrix.os }}-${{ matrix.rust }}
+          key: test-${{ matrix.os }}-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            test-${{ matrix.os }}-${{ matrix.rust }}-
       - uses: hecrj/setup-rust-action@v1
         with:
           rust-version: ${{ matrix.rust }}
@@ -47,7 +49,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: integration-test
+          key: integration-test-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            integration-test-
       - name: "Run integration test"
         run: integration_test/run_integration_test.sh
   clippy:
@@ -61,7 +65,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: clippy
+          key: clippy-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            clippy-
       - name: Install clippy
         run: rustup component add clippy
       - name: Run clippy
@@ -84,7 +90,9 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: fmt-${{ matrix.rust }}
+          key: fmt-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            fmt-${{ matrix.rust }}-
       - name: Install rustfmt
         run: rustup component add rustfmt
       - name: Run rustfmt
