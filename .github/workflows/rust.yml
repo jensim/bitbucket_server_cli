@@ -31,7 +31,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-${{ matrix.os }}-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-${{ matrix.os }}-${{ matrix.rust }}
       - name: Build
         run: cargo build --examples --lib --bins
       - name: Test
@@ -47,7 +47,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-integration-test-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-integration-test
       - name: "Run integration test"
         run: integration_test/run_integration_test.sh
   clippy:
@@ -61,7 +61,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-clippy-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-clippy
       - name: Install clippy
         run: rustup component add clippy
       - name: Run clippy
@@ -84,7 +84,7 @@ jobs:
             ~/.cargo/registry
             ~/.cargo/git
             target
-          key: cargo-fmt-${{ matrix.rust }}-${{ hashFiles('**/Cargo.lock') }}
+          key: cargo-fmt-${{ matrix.rust }}
       - name: Install rustfmt
         run: rustup component add rustfmt
       - name: Run rustfmt
