@@ -28,7 +28,7 @@ jobs:
           restore-keys: |
             cargo-
       - name: Install cargo-edit
-        run: cargo install cargo-edit
+        run: cargo install cargo-edit || echo 'cargo-edit already installed'
       - name: Perform dependency version check
         run: |
           if [[ $(cargo upgrade --dry-run | tail -1) != "bitbucket_server_cli:" ]]; then
