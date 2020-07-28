@@ -24,6 +24,8 @@ jobs:
             ~/.cargo/git
             target
           key: cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            cargo-
       - name: Install cargo-edit
         run: cargo install cargo-edit
       - name: Perform dependency version check
