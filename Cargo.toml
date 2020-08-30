@@ -17,13 +17,13 @@ include = [
 ]
 
 [dependencies]
-serde = { version = "1.0.114", features = ["derive"] }
-reqwest = { version = "0.10.7", features = ["json"] }
+serde = { version = "1.0.115", features = ["derive"] }
+reqwest = { version = "0.10.8", features = ["json"] }
 futures = "0.3.5"
 tokio = { version = "0.2.22", features = ["full"] }
 generic_error = "0.1.0"
-structopt = "0.3.16"
-clap = "2.33.2"
+structopt = "0.3.17"
+clap = "2.33.3"
 indicatif = "0.15.0"
 pickledb = "0.4.1"
 dialoguer = "0.6.2"
