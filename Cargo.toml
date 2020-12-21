@@ -32,7 +32,7 @@ parse_duration = "2.1.0"
 
 [dev-dependencies]
 tokio-test = "0.2.1"
-rand = "0.7.3"
+rand = "0.8.0"
 
 [badges]
 travis-ci = { repository = "jensim/bitbucket_server_cli", branch = "master" }
