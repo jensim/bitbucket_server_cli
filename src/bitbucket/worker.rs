@@ -8,7 +8,6 @@ use generic_error::{GenericError, Result};
 use indicatif::ProgressStyle;
 use reqwest::{header::ACCEPT, Client as ReqwestClient, RequestBuilder};
 use serde::de::DeserializeOwned;
-use tokio::time::delay_for;
 
 use crate::bitbucket::types::{
     get_clone_links, PageResponse, ProjDesc, Project, Repo, RepoUrlBuilder, UserResult,
@@ -173,7 +172,7 @@ impl BitbucketWorker<'_> {
                         } else if let Some(Some(backoff)) =
                             self.opts.backoff.map(|b| b.checked_mul((count + 1) as u32))
                         {
-                            delay_for(backoff).await;
+                            tokio::time::sleep(backoff).await;
                         }
                     }
                     Err(e) => {

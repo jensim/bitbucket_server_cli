@@ -1,13 +1,13 @@
 name: Rust audit
 
 on:
-  schedule:
+  schedule: # Only runs on default branch
     - cron: '0 2 * * *' # run at 2 AM UTC
   push:
     paths:
       - '.github/workflows/rust-audit.yml'
       - '**/Cargo.toml'
-      - 'Cargo.lock'
+      - '**/Cargo.lock'
 
 jobs:
   security_audit:
