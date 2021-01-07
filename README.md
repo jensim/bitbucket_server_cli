@@ -5,6 +5,8 @@ BitBucket Server Cli
 [![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
 [![Rust audit](https://github.com/jensim/bitbucket_server_cli/workflows/Rust%20audit/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3A%22Rust+audit%22)
 
+[![dependency status](https://deps.rs/repo/github/jensim/bitbucket_server_cli/status.svg)](https://deps.rs/repo/github/jensim/bitbucket_server_cli)
+
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 ![warnings forbidden](https://img.shields.io/badge/warnings-forbidden-success.svg)
 
@@ -15,7 +17,7 @@ BitBucket Server Cli
 [![Linuxbrew](https://img.shields.io/badge/LinuxBrew-repo-red)](https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/)
 
 ![State](https://img.shields.io/badge/maintenance-working_but_experimental-blue.svg)
-![Maintenance](https://img.shields.io/maintenance/yes/2020)
+![Maintenance](https://img.shields.io/maintenance/yes/2021)
 
 [![Screen recording](https://img.youtube.com/vi/9tVrG6uoUeM/0.jpg)](https://www.youtube.com/watch?v=9tVrG6uoUeM)
 
