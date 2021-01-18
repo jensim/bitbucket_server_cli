@@ -1,6 +1,6 @@
 [package]
 name = "bitbucket_server_cli"
-version = "0.3.15"
+version = "0.3.16-dev"
 authors = ["Jens Brimfors <jens.brimfors@gmail.se>"]
 edition = "2018"
 license = "MIT"
@@ -17,10 +17,10 @@ include = [
 ]
 
 [dependencies]
-serde = { version = "1.0.118", features = ["derive"] }
+serde = { version = "1.0.119", features = ["derive"] }
 reqwest = { version = "0.11.0", features = ["json"] }
-futures = "0.3.8"
-tokio = { version = "1.0.1", features = ["full"] }
+futures = "0.3.12"
+tokio = { version = "1.0.2", features = ["full"] }
 generic_error = "0.1.0"
 structopt = "0.3.21"
 clap = "2.33.3"
@@ -32,7 +32,7 @@ parse_duration = "2.1.0"
 
 [dev-dependencies]
 tokio-test = "0.4.0"
-rand = "0.8.1"
+rand = "0.8.2"
 
 [badges]
 travis-ci = { repository = "jensim/bitbucket_server_cli", branch = "master" }
