@@ -26,7 +26,7 @@ structopt = "0.3.21"
 clap = "2.33.3"
 indicatif = "0.15.0"
 pickledb = "0.4.1"
-dialoguer = "0.7.1"
+dialoguer = "0.8.0"
 atomic-counter = "1.0.1"
 parse_duration = "2.1.0"
 
