@@ -5,7 +5,8 @@ BitBucket Server Cli
 [![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
 [![Rust audit](https://github.com/jensim/bitbucket_server_cli/workflows/Rust%20audit/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3A%22Rust+audit%22)
 
-[![dependency status](https://deps.rs/repo/github/jensim/bitbucket_server_cli/status.svg)](https://deps.rs/repo/github/jensim/bitbucket_server_cli)
+[![repo dependency status](https://deps.rs/repo/github/jensim/bitbucket_server_cli/status.svg)](https://deps.rs/repo/github/jensim/bitbucket_server_cli)
+[![release dependency status](https://deps.rs/crate/bitbucket_server_cli/0.3.15/status.svg)](https://deps.rs/crate/bitbucket_server_cli/0.3.15)
 
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 ![warnings forbidden](https://img.shields.io/badge/warnings-forbidden-success.svg)
