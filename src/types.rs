@@ -162,6 +162,7 @@ pub struct GitOpts {
     pub output_directory: String,
 }
 arg_enum! {
+    #[allow(clippy::upper_case_acronyms)]
     #[derive(Clone, Debug)]
     pub enum CloneType {
         SSH,
