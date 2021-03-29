@@ -74,7 +74,7 @@ fn create_dir_if_necessary(output_dir: &str) -> Result<()> {
 
 fn get_output_dir(shell: Shell) -> Result<String> {
     let mut input = Input::new();
-    if let Some(output_dir_default) = get_default_completion_location(shell)? {
+    if let Some(output_dir_default) = get_default_completion_location(shell) {
         input.default(output_dir_default);
     }
     match input.with_prompt("Output directory").interact() {
@@ -105,18 +105,18 @@ fn get_shell_selection() -> Result<Shell> {
     }
 }
 
-fn get_default_completion_location(shell: Shell) -> Result<Option<String>> {
+fn get_default_completion_location(shell: Shell) -> Option<String> {
     let home = std::env::var(HOME_VAR);
     match (shell, home) {
-        (Shell::Zsh, Ok(home)) => Ok(join_path(&[&home, ".oh-my-zsh", "completions"])),
-        (Shell::Fish, Ok(home)) => Ok(join_path(&[&home, ".config", "fish", "completions"])),
-        (Shell::Bash, _) => Ok(join_path(&["/usr", "local", "share", "bash-completion"])),
-        (Shell::PowerShell, Ok(home)) => Ok(join_path(&[&home, "Documents", "WindowsPowerShell"])),
+        (Shell::Zsh, Ok(home)) => join_path(&[&home, ".oh-my-zsh", "completions"]),
+        (Shell::Fish, Ok(home)) => join_path(&[&home, ".config", "fish", "completions"]),
+        (Shell::Bash, _) => join_path(&["/usr", "local", "share", "bash-completion"]),
+        (Shell::PowerShell, Ok(home)) => join_path(&[&home, "Documents", "WindowsPowerShell"]),
         (_, Err(e)) => {
             eprintln!("Failed reading {} variable due to {:?}", HOME_VAR, e);
-            Ok(None)
+            None
         }
-        (_, Ok(_)) => Ok(None),
+        (_, Ok(_)) => None,
     }
 }
 
@@ -164,9 +164,7 @@ mod tests {
         #[cfg(not(target_os = "windows"))]
         {
             assert_eq!(
-                get_default_completion_location(Shell::Zsh)
-                    .unwrap()
-                    .unwrap(),
+                get_default_completion_location(Shell::Zsh).unwrap(),
                 format!("{}/.oh-my-zsh/completions", home)
             );
         }
