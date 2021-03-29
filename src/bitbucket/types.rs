@@ -114,8 +114,8 @@ pub struct GitResult {
     pub error: Option<String>,
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct PageResponse<T> {
     pub is_last_page: bool,
     pub size: u32,
@@ -123,8 +123,8 @@ pub struct PageResponse<T> {
     pub values: Vec<T>,
 }
 
-#[serde(rename_all = "camelCase")]
 #[derive(Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct UserResult {
     pub slug: String,
     pub active: bool,
