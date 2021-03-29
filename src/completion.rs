@@ -171,9 +171,7 @@ mod tests {
         #[cfg(target_os = "windows")]
         {
             assert_eq!(
-                get_default_completion_location(Shell::PowerShell)
-                    .unwrap()
-                    .unwrap(),
+                get_default_completion_location(Shell::PowerShell).unwrap(),
                 format!(r"{}\Documents\WindowsPowerShell", home)
             );
         }
