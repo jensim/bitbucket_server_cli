@@ -97,3 +97,14 @@ jobs:
         run: rustup component add rustfmt
       - name: Run rustfmt
         run: cargo fmt -- --check
+  sum:
+    needs:
+      - fmt
+      - clippy
+      - test
+      - integration-test
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Dummy output"
+        shell: bash
+        run: echo 'We did it!'
