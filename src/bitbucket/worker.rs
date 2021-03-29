@@ -325,7 +325,8 @@ mod tests {
                 );
                 assert!(
                     e.cause.contains("ConnectError(\"dns error\""),
-                    format!("Was {}", e.cause)
+                    "Was {}",
+                    e.cause
                 );
             }
         }
