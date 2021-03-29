@@ -38,8 +38,16 @@ jobs:
         with:
           rust-version: ${{ matrix.rust }}
       - name: Build
+        if: ${{ matrix.rust == 'stable' }}
+        run: cargo build --examples --lib --bins --release
+      - name: Build
+        if: ${{ matrix.rust != 'stable' }}
         run: cargo build --examples --lib --bins
       - name: Test
+        if: ${{ matrix.rust == 'stable' }}
+        run: cargo test --verbose --examples --lib --bins --release
+      - name: Test
+        if: ${{ matrix.rust != 'stable' }}
         run: cargo test --verbose --examples --lib --bins
       - name: Compress artifact
         if: ${{ matrix.rust == 'stable' }}
@@ -174,7 +182,7 @@ jobs:
           upload_url: ${{ steps.get_release_info.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
           asset_path: bitbucket_server_cli-${{ matrix.os }}/bitbucket_server_cli-${{ matrix.os }}.tgz
           asset_name: bitbucket_server_cli-${{ matrix.os }}.tgz
-          asset_content_type: application/tgz
+          asset_content_type: application/tar+gzip
   sum:
     needs:
       - fmt
