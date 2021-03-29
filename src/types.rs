@@ -136,7 +136,7 @@ pub struct GitOpts {
         long = "reset",
         name = "git_reset_state",
         help = "Reset repos before updating, \
-        and switch to master branch"
+        and switch to main branch"
     )]
     pub reset_state: bool,
     #[structopt(

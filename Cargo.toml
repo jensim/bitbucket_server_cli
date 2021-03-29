@@ -8,7 +8,7 @@ readme = "README.md"
 description = "A CLI for cloning and updating entire projects from bitbucket server"
 repository = "https://github.com/jensim/bitbucket_server_cli/"
 homepage = "https://github.com/jensim/bitbucket_server_cli/"
-documentation = "https://github.com/jensim/bitbucket_server_cli/blob/master/README.md"
+documentation = "https://github.com/jensim/bitbucket_server_cli/blob/main/README.md"
 keywords = ["cli", "bitbucket", "git", "clone"]
 categories = ["command-line-utilities", "development-tools"]
 include = [
@@ -35,5 +35,5 @@ tokio-test = "0.4.0"
 rand = "0.8.2"
 
 [badges]
-travis-ci = { repository = "jensim/bitbucket_server_cli", branch = "master" }
+travis-ci = { repository = "jensim/bitbucket_server_cli", branch = "main" }
 maintenance = { status = "experimental" }

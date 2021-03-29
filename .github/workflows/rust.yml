@@ -9,7 +9,7 @@ on:
       - '**/*.rs'
       - 'integration_test/**'
   pull_request:
-    branches: [ master ]
+    branches: [ main ]
 
 jobs:
   test:

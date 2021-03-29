@@ -1,9 +1,9 @@
 BitBucket Server Cli
 ----
 
-[![Travis-Build](https://travis-ci.org/jensim/bitbucket_server_cli.svg?branch=master)](https://travis-ci.org/jensim/bitbucket_server_cli)
-[![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
-[![Rust audit](https://github.com/jensim/bitbucket_server_cli/workflows/Rust%20audit/badge.svg?branch=master)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3A%22Rust+audit%22)
+[![Travis-Build](https://travis-ci.org/jensim/bitbucket_server_cli.svg?branch=main)](https://travis-ci.org/jensim/bitbucket_server_cli)
+[![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=main)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
+[![Rust audit](https://github.com/jensim/bitbucket_server_cli/workflows/Rust%20audit/badge.svg?branch=main)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3A%22Rust+audit%22)
 
 [![repo dependency status](https://deps.rs/repo/github/jensim/bitbucket_server_cli/status.svg)](https://deps.rs/repo/github/jensim/bitbucket_server_cli)
 [![release dependency status](https://deps.rs/crate/bitbucket_server_cli/0.3.15/status.svg)](https://deps.rs/crate/bitbucket_server_cli/0.3.15)

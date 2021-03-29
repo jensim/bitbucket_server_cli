@@ -24,7 +24,7 @@ FLAGS:
                           IFS= read -rs BITBUCKET_PASSWORD < /dev/tty  && export BITBUCKET_PASSWORD
     -H, --http-verbose    Output full http response on failed bitbucket requests.
     -Q, --git-quiet       Suppress warnings from failed git actions.
-    -R, --reset           Reset repos before updating, and switch to master branch
+    -R, --reset           Reset repos before updating, and switch to main branch
     -h, --help            Prints help information
     -V, --version         Prints version information
 

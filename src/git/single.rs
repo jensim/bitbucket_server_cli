@@ -66,8 +66,8 @@ impl SingleGit<'_, '_> {
         let string_path = self.path();
         let path = Path::new(&string_path);
         match exec("git reset --hard", path).await {
-            Ok(_) => match exec("git checkout master --quiet --force", path).await {
-                Err(e) => self.generate_repo_err("failed 'checkout master'", &e.msg),
+            Ok(_) => match exec("git checkout main --quiet --force", path).await {
+                Err(e) => self.generate_repo_err("failed 'checkout main'", &e.msg),
                 Ok(_) => Ok(()),
             },
             Err(e) => self.generate_repo_err("failed resetting repo", &e.msg),

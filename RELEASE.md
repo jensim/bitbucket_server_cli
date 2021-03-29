@@ -26,7 +26,7 @@ cargo publish
   * Add a git tag
     * `git tag -a <VERSION> -m "<VERSION>"`
   * Push
-    * `git push origin master`
+    * `git push origin main`
   * Brew update
     * `brew update`
     * `brew info jensim/bitbucket_server_cli/bitbucket_server_cli`
