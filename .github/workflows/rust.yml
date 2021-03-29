@@ -151,14 +151,13 @@ jobs:
       - name: Print release body
         shell: bash
         run: |
-          echo "# Build ${{ github.run_number }}" > "RELEASE_BODY.md"
           echo "[Github build](https://github.com/jensim/bitbucket_server_cli/runs/2216255053)" >> "RELEASE_BODY.md"
           echo "" >> "RELEASE_BODY.md"
           echo "| File | checksum |" >> "RELEASE_BODY.md"
           echo "|-----|-----|" >> "RELEASE_BODY.md"
-          echo "| bitbucket_server_cli-windows-latest.tgz | $(shasum -a 256 bitbucket_server_cli-windows-latest/bitbucket_server_cli-windows-latest.tgz) |" >> "RELEASE_BODY.md"
-          echo "| bitbucket_server_cli-macOS-latest.tgz | $(shasum -a 256 bitbucket_server_cli-macOS-latest/bitbucket_server_cli-macOS-latest.tgz) |" >> "RELEASE_BODY.md"
-          echo "| bitbucket_server_cli-ubuntu-latest.tgz | $(shasum -a 256 bitbucket_server_cli-ubuntu-latest/bitbucket_server_cli-ubuntu-latest.tgz) |" >> "RELEASE_BODY.md"
+          echo "| bitbucket_server_cli-windows-latest.tgz | $(shasum -a 256 bitbucket_server_cli-windows-latest/bitbucket_server_cli-windows-latest.tgz | sed 's| .*||') |" >> "RELEASE_BODY.md"
+          echo "| bitbucket_server_cli-macOS-latest.tgz | $(shasum -a 256 bitbucket_server_cli-macOS-latest/bitbucket_server_cli-macOS-latest.tgz | sed 's| .*||') |" >> "RELEASE_BODY.md"
+          echo "| bitbucket_server_cli-ubuntu-latest.tgz | $(shasum -a 256 bitbucket_server_cli-ubuntu-latest/bitbucket_server_cli-ubuntu-latest.tgz | sed 's| .*||') |" >> "RELEASE_BODY.md"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
