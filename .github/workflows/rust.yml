@@ -52,6 +52,9 @@ jobs:
           key: integration-test-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             integration-test-
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
       - name: "Run integration test"
         run: integration_test/run_integration_test.sh
   clippy:
@@ -68,6 +71,9 @@ jobs:
           key: clippy-${{ hashFiles('**/Cargo.lock') }}
           restore-keys: |
             clippy-
+      - uses: hecrj/setup-rust-action@v1
+        with:
+          rust-version: stable
       - name: Install clippy
         run: rustup component add clippy
       - name: Run clippy
