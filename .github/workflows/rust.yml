@@ -135,54 +135,69 @@ jobs:
      - integration-test
     runs-on: ubuntu-latest
     steps:
+
+      - name: Load Release tar file from release job Windows
+        uses: actions/download-artifact@v1
+        with:
+          name: bitbucket_server_cli-windows-latest
+      - name: Load Release tar file from release job MacOS
+        uses: actions/download-artifact@v1
+        with:
+          name: bitbucket_server_cli-macOS-latest
+      - name: Load Release tar file from release job Ubuntu
+        uses: actions/download-artifact@v1
+        with:
+          name: bitbucket_server_cli-ubuntu-latest
+      - name: Print release body
+        shell: bash
+        run: |
+          echo "# Build ${{ github.run_number }}" > "RELEASE_BODY.md"
+          echo "[Github build](https://github.com/jensim/bitbucket_server_cli/runs/2216255053)" >> "RELEASE_BODY.md"
+          echo "" >> "RELEASE_BODY.md"
+          echo "| File | checksum |" >> "RELEASE_BODY.md"
+          echo "|-----|-----|" >> "RELEASE_BODY.md"
+          echo "| bitbucket_server_cli-windows-latest.tgz | $(shasum -a 256 bitbucket_server_cli-windows-latest/bitbucket_server_cli-windows-latest.tgz) |" >> "RELEASE_BODY.md"
+          echo "| bitbucket_server_cli-macOS-latest.tgz | $(shasum -a 256 bitbucket_server_cli-macOS-latest/bitbucket_server_cli-macOS-latest.tgz) |" >> "RELEASE_BODY.md"
+          echo "| bitbucket_server_cli-ubuntu-latest.tgz | $(shasum -a 256 bitbucket_server_cli-ubuntu-latest/bitbucket_server_cli-ubuntu-latest.tgz) |" >> "RELEASE_BODY.md"
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: ${{ github.ref }}
-          release_name: Build ${{ github.ref }}
+          tag_name: github-actions-build-${{ github.run_number }}
+          release_name: Build ${{ github.run_number }}
           draft: true
           prerelease: true
-      - name: Output Release URL File
-        run: echo "${{ steps.create_release.outputs.upload_url }}" > release_url.txt
-      - name: Save Release URL File for publish
-        uses: actions/upload-artifact@v1
-        with:
-          name: release_url
-          path: release_url.txt
-
-  upload_assets:
-    name: Upload release assets
-    needs:
-      - draft_release
-    runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        os: [ ubuntu-latest, macOS-latest, windows-latest ]
-    steps:
-      - name: Load Release URL File from release job
-        uses: actions/download-artifact@v1
-        with:
-          name: release_url
-      - name: Load Release tar file from release job
-        uses: actions/download-artifact@v1
-        with:
-          name: bitbucket_server_cli-${{ matrix.os }}
-      - name: Get Release File Name & Upload URL
-        id: get_release_info
-        run: echo "::set-output name=upload_url::$(cat release_url/release_url.txt)"
-      - name: Upload Release Asset
-        id: upload-release-asset
+          body_path: RELEASE_BODY.md
+      - name: Upload Windows Asset
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          upload_url: ${{ steps.get_release_info.outputs.upload_url }} # This pulls from the CREATE RELEASE step above, referencing it's ID to get its outputs object, which include a `upload_url`. See this blog post for more info: https://jasonet.co/posts/new-features-of-github-actions/#passing-data-to-future-steps
-          asset_path: bitbucket_server_cli-${{ matrix.os }}/bitbucket_server_cli-${{ matrix.os }}.tgz
-          asset_name: bitbucket_server_cli-${{ matrix.os }}.tgz
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bitbucket_server_cli-windows-latest/bitbucket_server_cli-windows-latest.tgz
+          asset_name: bitbucket_server_cli-windows-latest.tgz
           asset_content_type: application/tar+gzip
+      - name: Upload MacOS Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bitbucket_server_cli-macOS-latest/bitbucket_server_cli-macOS-latest.tgz
+          asset_name: bitbucket_server_cli-macOS-latest.tgz
+          asset_content_type: application/tar+gzip
+      - name: Upload Linux Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: bitbucket_server_cli-ubuntu-latest/bitbucket_server_cli-ubuntu-latest.tgz
+          asset_name: bitbucket_server_cli-ubuntu-latest.tgz
+          asset_content_type: application/tar+gzip
+
   sum:
     needs:
       - fmt
@@ -190,7 +205,6 @@ jobs:
       - test
       - integration-test
       - draft_release
-      - upload_assets
     runs-on: ubuntu-latest
     steps:
       - name: "Dummy output"
