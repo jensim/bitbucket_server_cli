@@ -24,7 +24,7 @@ tokio = { version = "1.0.2", features = ["full"] }
 generic_error = "0.2.0"
 structopt = "0.3.21"
 clap = "2.33.3"
-indicatif = "0.15.0"
+indicatif = "0.16.0"
 pickledb = "0.4.1"
 dialoguer = "0.8.0"
 atomic-counter = "1.0.1"
