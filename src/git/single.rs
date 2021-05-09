@@ -61,11 +61,12 @@ impl SingleGit<'_, '_> {
                 path,
             )
             .await?;
-            match self
+            if self
                 .exec_resolve("git pull", "git pull --autostash --ff-only --rebase", path)
                 .await
+                .is_err()
             {
-                _ => {}
+                // Do nothing
             }
             self.exec_resolve(
                 &format!("checkout {}", main_branch),
