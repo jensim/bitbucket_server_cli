@@ -1,7 +1,6 @@
 BitBucket Server Cli
 ----
 
-[![Travis-Build](https://travis-ci.org/jensim/bitbucket_server_cli.svg?branch=main)](https://travis-ci.org/jensim/bitbucket_server_cli)
 [![GH-Build](https://github.com/jensim/bitbucket_server_cli/workflows/Rust/badge.svg?branch=main)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3ARust)
 [![Rust audit](https://github.com/jensim/bitbucket_server_cli/workflows/Rust%20audit/badge.svg?branch=main)](https://github.com/jensim/bitbucket_server_cli/actions?query=workflow%3A%22Rust+audit%22)
 

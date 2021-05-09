@@ -270,7 +270,7 @@ mod test {
                     "http timeout was not set correctly"
                 )
             }
-            _ => assert!(false, "Bad format"),
+            _ => panic!("Bad format"),
         }
     }
 }
