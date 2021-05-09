@@ -135,7 +135,6 @@ jobs:
      - integration-test
     runs-on: ubuntu-latest
     steps:
-
       - name: Load Release tar file from release job Windows
         uses: actions/download-artifact@v1
         with:

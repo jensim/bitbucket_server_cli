@@ -6,9 +6,6 @@ WORKDIR=$(git rev-parse --show-toplevel)
 
 cd $WORKDIR
 
-#gem install travis
-#travis lint .travis.yml --exit-code
-
 cargo fmt --all -- --check
 cargo clippy
 

@@ -71,7 +71,7 @@ pub struct BitBucketOpts {
         help = "Number of concurrent http requests towards bitbucket. Keep it sane, keep bitbucket alive for all. Max=100",
         default_value = "20"
     )]
-    pub concurrency: usize,
+    pub concurrency: u8,
     #[structopt(
         short = "H",
         long = "http-verbose",

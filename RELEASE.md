@@ -6,12 +6,10 @@ cargo publish
 ```
 ## Brew
 [Good instructions!!](https://federicoterzi.com/blog/how-to-publish-your-rust-project-on-homebrew/)
-* Travis will draft a release for us
-  * https://travis-ci.org/github/jensim/bitbucket_server_cli
-    * Checksum can be found in the end of the log for each of the builds
-      * Linux
-      * OSX
-  * Once successfull hit the publish button in GitHub GUI
+* GitHub Actions is set up to draft a release for us
+  * https://github.com/jensim/bitbucket_server_cli/blob/main/.github/workflows/rust.yml
+    * Checksum can be found in the release draft bodies  
+  * Once successful, hit the publish button in GitHub GUI
     * https://github.com/jensim/bitbucket_server_cli/releases
 * Clone https://github.com/jensim/homebrew-bitbucket_server_cli
   * Edit Formula/bitbucket_server_cli.rb (edit placeholders within <>)

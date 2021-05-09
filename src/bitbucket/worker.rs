@@ -111,7 +111,7 @@ impl BitbucketWorker<'_> {
                     r
                 }
             }))
-            .buffer_unordered(self.opts.concurrency)
+            .buffer_unordered(self.opts.concurrency.into())
             .collect::<Vec<BitbucketResult<Vec<Repo>>>>()
             .await;
         progress_bar.finish();

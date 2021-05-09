@@ -3,6 +3,7 @@ use crate::types::GitOpts;
 use crate::util::{bail, exec};
 use generic_error::Result;
 use std::path::Path;
+use std::process::Output;
 
 #[derive(Clone)]
 pub struct SingleGit<'a, 'b> {
@@ -31,34 +32,101 @@ impl SingleGit<'_, '_> {
         let string_path = format!("{}/{}", self.opts.output_directory, self.repo.project_key);
         let path = Path::new(&string_path);
 
-        let fail_suffix = format!("failed git clone into {}", self.opts.output_directory);
-        match exec(
-            &*format!("git clone {} {}", self.repo.git, self.repo.name),
+        self.exec_resolve(
+            &format!("git clone into {}", self.opts.output_directory),
+            &format!("git clone {} {}", self.repo.git, self.repo.name),
             path,
         )
-        .await
-        {
-            Ok(o) if o.status.success() => Ok(()),
-            Ok(o) if !o.status.success() => {
-                self.generate_repo_err_from_output(&fail_suffix, o.stdout, o.stderr)
-            }
-            Err(e) => self.generate_repo_err(&fail_suffix, &e.msg),
-            _ => self.generate_repo_err(&fail_suffix, "unknown"),
-        }
+        .await?;
+        Ok(())
     }
 
     async fn git_update(&self) -> Result<()> {
         let string_path = self.path();
         let path = Path::new(&string_path);
+        let current_branch_raw: Vec<u8> =
+            exec("git rev-parse --abbrev-ref HEAD", path).await?.stdout;
+        let current_branch: &str = std::str::from_utf8(&current_branch_raw)?.trim();
+        let main_branch: String = self.get_git_main().await?;
 
-        let fail_suffix = "failed git pull";
-        match exec("git pull --autostash --ff-only --rebase", path).await {
-            Ok(o) if o.status.success() => Ok(()),
-            Ok(o) if !o.status.success() => {
-                self.generate_repo_err_from_output(fail_suffix, o.stdout, o.stderr)
+        if main_branch == "(unknown)" {
+            self.generate_repo_err("get main branch", "main branch unknown")?;
+        } else if current_branch == main_branch.as_str() {
+            self.exec_resolve("git pull", "git pull --autostash --ff-only --rebase", path)
+                .await?;
+        } else {
+            self.exec_resolve(
+                "git fetch",
+                &format!("git fetch origin {}:{}", main_branch, main_branch),
+                path,
+            )
+            .await?;
+            match self
+                .exec_resolve("git pull", "git pull --autostash --ff-only --rebase", path)
+                .await
+            {
+                _ => {}
             }
-            Err(e) => self.generate_repo_err(fail_suffix, &e.msg),
-            _ => self.generate_repo_err(fail_suffix, "unknown"),
+            self.exec_resolve(
+                &format!("checkout {}", main_branch),
+                &format!("git checkout {}", main_branch),
+                path,
+            )
+            .await?;
+        }
+        self.clean_merged_branches(&main_branch, path).await?;
+        Ok(())
+    }
+
+    async fn clean_merged_branches(&self, main_branch: &str, path: &Path) -> Result<()> {
+        let out_raw: Vec<u8> = self
+            .exec_resolve("list merged branches", "git branch --merged", path)
+            .await?
+            .stdout;
+        let out: &str = std::str::from_utf8(&out_raw)?;
+        for line in out.lines() {
+            if !line.starts_with("* ") && line != format!("  {}", main_branch) {
+                self.exec_resolve(
+                    "remove branch",
+                    &format!("git branch -D {}", line.trim()),
+                    path,
+                )
+                .await?;
+            }
+        }
+        Ok(())
+    }
+
+    async fn exec_resolve(&self, action: &str, cmd: &str, path: &Path) -> Result<Output> {
+        match exec(cmd, path).await {
+            Ok(o) if o.status.success() => Ok(o),
+            Ok(o) if !o.status.success() => {
+                self.generate_repo_err_from_output(action, o.stdout, o.stderr)
+            }
+            Err(e) => self.generate_repo_err(action, &e.msg),
+            _ => self.generate_repo_err(action, "unknown"),
+        }
+    }
+
+    async fn get_git_main(&self) -> Result<String> {
+        let path_string = self.path();
+        let path = Path::new(&path_string);
+        let raw: Vec<u8> = self
+            .exec_resolve("git remote show origin", "git remote show origin", path)
+            .await?
+            .stdout;
+        let stdout: &str = std::str::from_utf8(&raw)?;
+        self.get_git_main_from_remote_info(stdout)
+    }
+
+    fn get_git_main_from_remote_info(&self, remote_info: &str) -> Result<String> {
+        let opt: Option<String> = remote_info
+            .lines()
+            .find(|s| s.starts_with("  HEAD branch: "))
+            .map(|s| String::from(&s[15..]));
+        match opt {
+            Some(s) => Ok(s),
+            None => self.generate_repo_err("list branches", "unable to filter main branch"),
         }
     }
 
@@ -66,11 +134,19 @@ impl SingleGit<'_, '_> {
         let string_path = self.path();
         let path = Path::new(&string_path);
         match exec("git reset --hard", path).await {
-            Ok(_) => match exec("git checkout main --quiet --force", path).await {
-                Err(e) => self.generate_repo_err("failed 'checkout main'", &e.msg),
-                Ok(_) => Ok(()),
-            },
-            Err(e) => self.generate_repo_err("failed resetting repo", &e.msg),
+            Ok(_) => {
+                let main_branch: String = self.get_git_main().await?;
+                match exec(
+                    &format!("git checkout {} --quiet --force", main_branch),
+                    path,
+                )
+                .await
+                {
+                    Err(e) => self.generate_repo_err(&format!("checkout {}", main_branch), &e.msg),
+                    Ok(_) => Ok(()),
+                }
+            }
+            Err(e) => self.generate_repo_err("resetting repo", &e.msg),
         }
     }
 
@@ -81,9 +157,8 @@ impl SingleGit<'_, '_> {
         cause_err: Vec<u8>,
     ) -> Result<T> {
         let cause = match (cause_to_str(cause_err), cause_to_str(cause_out)) {
-            (Some(e), Some(o)) => format!("Err: '{}' Output: '{}'", e.trim(), o.trim()),
-            (Some(e), None) => format!("Err: '{}'", e.trim()),
-            (None, Some(o)) => format!("Output: '{}'", o.trim()),
+            (Some(e), _) => format!("Err: '{}'", e.trim()),
+            (_, Some(o)) => format!("Output: '{}'", o.trim()),
             (None, None) => "no output".to_string(),
         };
         self.generate_repo_err(suffix, &cause)
@@ -100,10 +175,13 @@ impl SingleGit<'_, '_> {
         Path::new(&self.path()).exists()
     }
 
-    fn generate_repo_err<T>(&self, suffix: &str, cause: &str) -> Result<T> {
+    fn generate_repo_err<T>(&self, action: &str, cause: &str) -> Result<T> {
         bail(&format!(
-            "{}/{} {}. Cause: {}",
-            &self.repo.project_key, self.repo.name, suffix, cause
+            "{}/{} failed {}. Cause: {}",
+            &self.repo.project_key,
+            self.repo.name,
+            action,
+            cause.lines().next().unwrap_or("unknown")
         ))
     }
 }
@@ -159,9 +237,45 @@ mod tests {
         let single = SingleGit::new(&repo, &opts);
 
         single.git_clone().await.unwrap();
-        assert!(Path::new(repo_path).exists(), "Failed cleaning away dir.");
+        assert!(Path::new(repo_path).exists(), "Failed cloning");
 
         single.git_update().await.unwrap();
-        assert!(Path::new(repo_path).exists(), "Failed cleaning away dir.");
+
+        if let Err(e) = exec(RM_STR, project_path).await {
+            eprintln!("Failed removing {} due to {:?}", repo_path, e)
+        }
+        assert!(!Path::new(repo_path).exists(), "Failed cleaning away dir.");
+    }
+
+    #[test]
+    fn test_get_git_main_from_remote_info() {
+        //let repo_path = "/tmp/test_project/test_repo";
+        let repo = repo("test_project", "test_repo");
+        let project_path = "/tmp/test_project";
+        let output_directory = "/tmp";
+        let opts = GitOpts {
+            reset_state: false,
+            concurrency: 1,
+            quiet: false,
+            output_directory: output_directory.to_owned(),
+        };
+        std::fs::create_dir_all(project_path).unwrap();
+
+        let single = SingleGit::new(&repo, &opts);
+        let s = single.get_git_main_from_remote_info(
+            "* remote origin
+  Fetch URL: ssh://git@github.com/jensim/foo-bar-baz.git
+  Push  URL: ssh://git@github.com/jensim/foo-bar-baz.git
+  HEAD branch: master
+  Remote branches:
+    master                                                       tracked
+  Local branches configured for 'git pull':
+    master                                                       merges with remote master
+  Local refs configured for 'git push':
+    master                                                       pushes to master                                                       (up to date)
+",
+        ).unwrap();
+
+        assert_eq!(s, "master")
     }
 }
