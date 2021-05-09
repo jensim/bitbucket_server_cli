@@ -145,7 +145,6 @@ impl RepoUrlBuilder for UserResult {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::time::Duration;
 
     #[test]
     fn test_add_user_to_url_with_user() {
@@ -192,9 +191,9 @@ mod tests {
             clone_type: CloneType::HttpSavedLogin,
             project_keys: vec!["key".to_owned()],
             all: false,
-            timeout: Duration::from_secs(5),
+            timeout_sec: 5,
             retries: 1,
-            backoff: None,
+            backoff_sec: None,
         };
         let vec1 = get_clone_links(&prjs, &opts);
         assert_eq!(vec1.len(), 1, "Wrong number of output Repo objects");
@@ -218,9 +217,9 @@ mod tests {
             clone_type: CloneType::HTTP,
             project_keys: vec!["key".to_owned()],
             all: false,
-            timeout: Duration::from_secs(5),
+            timeout_sec: 5,
             retries: 1,
-            backoff: None,
+            backoff_sec: None,
         };
         let vec1 = get_clone_links(&prjs, &opts);
         assert_eq!(vec1.len(), 1);

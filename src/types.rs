@@ -8,7 +8,6 @@ use crate::input::prompts::{PROMPT_BB_PROJECT_ALL, PROMPT_BB_SERVER, PROMPT_BB_U
 use crate::input::{get_bool, get_password, get_with_default, password_from_env};
 use crate::util::bail;
 use dialoguer::Confirm;
-use std::time::Duration;
 
 #[derive(StructOpt, Debug, Clone)]
 #[structopt(
@@ -110,11 +109,10 @@ pub struct BitBucketOpts {
     pub all: bool,
     #[structopt(
         long = "http-timeout",
-        help = "HTTP timout, 2min4sec6milli8micro3nano combine freely with or without abbreviations or spaces.",
-        default_value = "2.5 sec",
-        parse(try_from_str = parse_duration::parse),
+        help = "HTTP timout, seconds.",
+        default_value = "3"
     )]
-    pub timeout: Duration,
+    pub timeout_sec: u64,
     #[structopt(
         long,
         help = "Retries to attempt requesting on timeout from bitbucket.",
@@ -123,10 +121,9 @@ pub struct BitBucketOpts {
     pub retries: u32,
     #[structopt(
         long = "http-backoff",
-        help = "Linear backoff time per failed request.\nie. 10 timed out requests and backoff=10ms -> 100ms backoff on next timed out request\nor {prior_timeouts}*{backoff}={delay_on_next_timeout}",
-        parse(try_from_str = parse_duration::parse),
+        help = "Linear backoff time per failed request, expressed in seconds.\nie. 10 timed out requests and backoff=10s -> 100s backoff on next timed out request"
     )]
-    pub backoff: Option<Duration>,
+    pub backoff_sec: Option<u64>,
 }
 
 #[derive(StructOpt, Clone, Debug)]
@@ -259,10 +256,21 @@ mod test {
     use super::*;
 
     #[test]
-    fn test_multi_time_parse() {
-        assert_eq!(
-            parse_duration::parse("2.5s500ms").unwrap(),
-            Duration::from_secs(3)
-        )
+    fn test_parsing() {
+        let opt: Opts = Opts::from_iter(&[
+            "bitbucket_server_cli",
+            "clone-projects",
+            "--http-timeout",
+            "10",
+        ]);
+        match opt {
+            Opts::CloneProjects(co) => {
+                assert_eq!(
+                    co.bitbucket_opts.timeout_sec, 10,
+                    "http timeout was not set correctly"
+                )
+            }
+            _ => assert!(false, "Bad format"),
+        }
     }
 }

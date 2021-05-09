@@ -28,7 +28,6 @@ indicatif = "0.16"
 pickledb = "0.4"
 dialoguer = "0.8"
 atomic-counter = "1.0"
-parse_duration = "2.1"
 
 [dev-dependencies]
 tokio-test = "0.4"

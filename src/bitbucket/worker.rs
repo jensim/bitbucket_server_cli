@@ -14,6 +14,7 @@ use crate::bitbucket::types::{
 };
 use crate::types::BitBucketOpts;
 use crate::util::bail;
+use std::time::Duration;
 
 pub type BitbucketResult<T> = std::result::Result<T, BitbucketError>;
 
@@ -165,14 +166,14 @@ impl BitbucketWorker<'_> {
                         }
                     }
                     Err(e) if e.is_timeout => {
-                        let count = self.timeout_counter.inc();
+                        let count: u64 = self.timeout_counter.inc() as u64;
                         if attempt > self.opts.retries {
                             // Last chance blown!
                             return Err(e);
                         } else if let Some(Some(backoff)) =
-                            self.opts.backoff.map(|b| b.checked_mul((count + 1) as u32))
+                            self.opts.backoff_sec.map(|b| b.checked_mul(count + 1))
                         {
-                            tokio::time::sleep(backoff).await;
+                            tokio::time::sleep(Duration::from_secs(backoff)).await;
                         }
                     }
                     Err(e) => {
@@ -206,7 +207,7 @@ impl BitbucketWorker<'_> {
     fn bake_client(&self, url: &str) -> RequestBuilder {
         let builder: RequestBuilder = ReqwestClient::new()
             .get(url)
-            .timeout(self.opts.timeout)
+            .timeout(Duration::from_secs(self.opts.timeout_sec))
             .header(ACCEPT, "application/json");
         match (&self.opts.username, &self.opts.password) {
             (Some(u), Some(p)) => builder.basic_auth(u, Some(p)),
@@ -261,8 +262,6 @@ where
 
 #[cfg(test)]
 mod tests {
-    use std::time::Duration;
-
     use rand::distributions::Alphanumeric;
     use rand::{thread_rng, Rng};
 
@@ -296,9 +295,9 @@ mod tests {
             clone_type: CloneType::HTTP,
             project_keys: vec!["key".to_owned()],
             all: false,
-            timeout: Duration::from_secs(10),
+            timeout_sec: 10,
             retries: 0,
-            backoff: None,
+            backoff_sec: None,
         }
     }
 
