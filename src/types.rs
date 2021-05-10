@@ -262,15 +262,55 @@ mod test {
             "clone-projects",
             "--http-timeout",
             "10",
+            "--server",
+            "https://bitbucket.example.com",
+            "--batch",
+            "--all",
+            "--username",
+            "jensim",
+            "--password",
+            "myPass1234",
         ]);
         match opt {
-            Opts::CloneProjects(co) => {
+            Opts::CloneProjects(mut co) => {
+                co.validate().unwrap();
                 assert_eq!(
                     co.bitbucket_opts.timeout_sec, 10,
                     "http timeout was not set correctly"
-                )
+                );
+                assert_eq!(co.batch_mode, true, "Batch mode should be active");
+                assert_eq!(co.bitbucket_opts.username, Some(String::from("jensim")));
+                assert_eq!(co.bitbucket_opts.password, Some(String::from("myPass1234")));
             }
             _ => panic!("Bad format"),
         }
+    }
+
+    #[test]
+    fn test_parsing_password_from_env() {
+        let opt: Opts = Opts::from_iter(&[
+            "bitbucket_server_cli",
+            "clone-projects",
+            "--server",
+            "https://bitbucket.example.com",
+            "--batch",
+            "--all",
+            "--username",
+            "jensim",
+            "--env-password",
+        ]);
+        std::env::set_var("BITBUCKET_PASSWORD", "myEnvPass1234");
+        match opt {
+            Opts::CloneProjects(mut co) => {
+                co.validate().unwrap();
+                assert_eq!(co.bitbucket_opts.username, Some(String::from("jensim")));
+                assert_eq!(
+                    co.bitbucket_opts.password,
+                    Some(String::from("myEnvPass1234"))
+                );
+            }
+            _ => panic!("Bad format"),
+        }
+        std::env::remove_var("BITBUCKET_PASSWORD");
     }
 }
