@@ -10,9 +10,9 @@ BitBucket Server Cli
 [![unsafe forbidden](https://img.shields.io/badge/unsafe-forbidden-success.svg)](https://github.com/rust-secure-code/safety-dance/)
 ![warnings forbidden](https://img.shields.io/badge/warnings-forbidden-success.svg)
 
-![Crates.io](https://img.shields.io/crates/l/bitbucket_server_cli)
-![Crates.io](https://img.shields.io/crates/v/bitbucket_server_cli)
-![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)
+[![Crates.io](https://img.shields.io/crates/l/bitbucket_server_cli)](https://crates.io/crates/bitbucket_server_cli)
+[![Crates.io](https://img.shields.io/crates/v/bitbucket_server_cli)](https://crates.io/crates/bitbucket_server_cli)
+[![Crates.io](https://img.shields.io/crates/d/bitbucket_server_cli)](https://crates.io/crates/bitbucket_server_cli)
 [![Homebrew](https://img.shields.io/badge/HomeBrew-repo-blue)](https://github.com/jensim/homebrew-bitbucket_server_cli/)
 [![Linuxbrew](https://img.shields.io/badge/LinuxBrew-repo-red)](https://github.com/jensim/linuxbrew-bitbucket_server_cli-linux/)
 
