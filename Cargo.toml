@@ -1,6 +1,6 @@
 [package]
 name = "bitbucket_server_cli"
-version = "0.4.1-dev"
+version = "0.4.1"
 authors = ["Jens Brimfors <jens.brimfors@gmail.se>"]
 edition = "2018"
 license = "MIT"
@@ -20,7 +20,7 @@ include = [
 serde = { version = "1.0", features = ["derive"] }
 reqwest = { version = "0.11", features = ["json"] }
 futures = "0.3"
-tokio = { version = "1.5", features = ["full"] }
+tokio = { version = "1.11", features = ["full"] }
 generic_error = "0.2"
 structopt = "0.3"
 clap = "2.33"

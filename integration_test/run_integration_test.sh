@@ -23,7 +23,7 @@ cd /tmp
 rm -rf my_hot_repos
 mkdir my_hot_repos
 cd my_hot_repos
-bitbucket_server_cli clone --all --batch --clone-type=http --server=http://localhost:8080
+bitbucket_server_cli clone --all --batch --clone-type=http --server=http://localhost:8080/
 test -f /tmp/my_hot_repos/active/linuxbrew-bitbucket_server_cli/Formula/bitbucket_server_cli.rb
 test -f /tmp/my_hot_repos/\~jensim/homebrew-bitbucket_server_cli/Formula/bitbucket_server_cli.rb
 
@@ -33,3 +33,4 @@ docker-compose down
 cd "${PRJ_ROOT}"
 
 set +e
+echo 'Great success!'

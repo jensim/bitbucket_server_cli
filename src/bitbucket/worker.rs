@@ -142,7 +142,10 @@ impl BitbucketWorker<'_> {
     where
         T: DeserializeOwned,
     {
-        let host = self.opts.server.clone().unwrap();
+        let mut host = self.opts.server.clone().unwrap();
+        if host.ends_with('/') {
+            host.pop();
+        }
         let mut start: u32 = 0;
         let mut sum: Vec<T> = vec![];
         'outer: loop {
