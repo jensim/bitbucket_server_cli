@@ -278,7 +278,7 @@ mod test {
                     co.bitbucket_opts.timeout_sec, 10,
                     "http timeout was not set correctly"
                 );
-                assert_eq!(co.batch_mode, true, "Batch mode should be active");
+                assert!(co.batch_mode, "Batch mode should be active");
                 assert_eq!(co.bitbucket_opts.username, Some(String::from("jensim")));
                 assert_eq!(co.bitbucket_opts.password, Some(String::from("myPass1234")));
             }

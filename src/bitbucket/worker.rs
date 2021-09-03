@@ -203,7 +203,7 @@ impl BitbucketWorker<'_> {
     {
         let path = project.get_repos_path();
         let projects: Vec<Project> = self.fetch_all_paginated("project", &path).await?;
-        let repos = get_clone_links(&projects, &self.opts);
+        let repos = get_clone_links(&projects, self.opts);
         Ok(repos)
     }
 
