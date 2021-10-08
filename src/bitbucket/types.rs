@@ -183,6 +183,7 @@ mod tests {
         let prjs = from(repo_str, CloneType::HttpSavedLogin);
         let opts = BitBucketOpts {
             server: None,
+            https_allow_anything: false,
             username: Some("admin".to_owned()),
             password: Some("password123".to_owned()),
             concurrency: 0,
@@ -209,6 +210,7 @@ mod tests {
         let prjs = from(repo_str, CloneType::HTTP);
         let opts = BitBucketOpts {
             server: None,
+            https_allow_anything: false,
             username: Some("admin".to_owned()),
             password: None,
             concurrency: 0,

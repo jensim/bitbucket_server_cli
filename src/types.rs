@@ -124,6 +124,11 @@ pub struct BitBucketOpts {
         help = "Linear backoff time per failed request, expressed in seconds.\nie. 10 timed out requests and backoff=10s -> 100s backoff on next timed out request"
     )]
     pub backoff_sec: Option<u64>,
+    #[structopt(
+        long = "https-allow-anything",
+        help = "Allow self signed or invalid certificates for http"
+    )]
+    pub https_allow_anything: bool,
 }
 
 #[derive(StructOpt, Clone, Debug)]
@@ -157,6 +162,11 @@ pub struct GitOpts {
         default_value = "."
     )]
     pub output_directory: String,
+    #[structopt(
+        long = "git-ssl-allow-anything",
+        help = "Allow self signed or invalid certificates for git"
+    )]
+    pub ssl_allow_anything: bool,
 }
 arg_enum! {
     #[allow(clippy::upper_case_acronyms)]

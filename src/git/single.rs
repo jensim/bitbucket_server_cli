@@ -32,9 +32,17 @@ impl SingleGit<'_, '_> {
         let string_path = format!("{}/{}", self.opts.output_directory, self.repo.project_key);
         let path = Path::new(&string_path);
 
+        let extra_conf = if self.opts.ssl_allow_anything {
+            "-c http.sslVerify=false "
+        } else {
+            ""
+        };
         self.exec_resolve(
             &format!("git clone into {}", self.opts.output_directory),
-            &format!("git clone {} {}", self.repo.git, self.repo.name),
+            &format!(
+                "git {}clone {} {}",
+                extra_conf, self.repo.git, self.repo.name
+            ),
             path,
         )
         .await?;
@@ -225,6 +233,7 @@ mod tests {
             concurrency: 1,
             quiet: false,
             output_directory: output_directory.to_owned(),
+            ssl_allow_anything: false,
         };
         std::fs::create_dir_all(project_path).unwrap();
         assert!(
@@ -259,6 +268,7 @@ mod tests {
             concurrency: 1,
             quiet: false,
             output_directory: output_directory.to_owned(),
+            ssl_allow_anything: false,
         };
         std::fs::create_dir_all(project_path).unwrap();
 

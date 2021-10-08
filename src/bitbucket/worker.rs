@@ -6,7 +6,7 @@ use futures::stream::{self, StreamExt};
 use futures::SinkExt as _;
 use generic_error::{GenericError, Result};
 use indicatif::ProgressStyle;
-use reqwest::{header::ACCEPT, Client as ReqwestClient, RequestBuilder};
+use reqwest::{header::ACCEPT, RequestBuilder};
 use serde::de::DeserializeOwned;
 
 use crate::bitbucket::types::{
@@ -156,8 +156,16 @@ impl BitbucketWorker<'_> {
                 start = start
             );
             for attempt in 1..self.opts.retries + 2 {
+                let request_builder: Result<RequestBuilder> = self.bake_client(&url);
+                if request_builder.is_err() {
+                    return Err(BitbucketError {
+                        is_timeout: false,
+                        msg: "Failed generating bitbucket client request".to_owned(),
+                        cause: request_builder.err().unwrap().msg,
+                    });
+                }
                 let response: reqwest::Result<reqwest::Response> =
-                    self.bake_client(&url).send().await;
+                    request_builder.unwrap().send().await;
                 match extract_body::<PageResponse<T>>(response, naming).await {
                     Ok(mut resp) => {
                         sum.append(resp.values.borrow_mut());
@@ -207,15 +215,17 @@ impl BitbucketWorker<'_> {
         Ok(repos)
     }
 
-    fn bake_client(&self, url: &str) -> RequestBuilder {
-        let builder: RequestBuilder = ReqwestClient::new()
+    fn bake_client(&self, url: &str) -> Result<RequestBuilder> {
+        let builder: RequestBuilder = reqwest::Client::builder()
+            .danger_accept_invalid_certs(self.opts.https_allow_anything)
+            .build()?
             .get(url)
             .timeout(Duration::from_secs(self.opts.timeout_sec))
             .header(ACCEPT, "application/json");
-        match (&self.opts.username, &self.opts.password) {
+        Ok(match (&self.opts.username, &self.opts.password) {
             (Some(u), Some(p)) => builder.basic_auth(u, Some(p)),
             _ => builder,
-        }
+        })
     }
 }
 
@@ -290,6 +300,7 @@ mod tests {
             password_from_env: false,
             concurrency: 1,
             verbose: true,
+            https_allow_anything: false,
             server: Some(format!(
                 "http://{host}.p2/{path}",
                 host = random_string(12),

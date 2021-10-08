@@ -79,8 +79,9 @@ mod tests {
         let opts = CloneOpts {
             batch_mode: true,
             bitbucket_opts: BitBucketOpts {
-                server: Some("http://github.com".to_owned()),
+                server: Some("https://github.com".to_owned()),
                 verbose: true,
+                https_allow_anything: false,
                 concurrency: 1,
                 password: Some("PA$$WoRD123#%&".to_owned()),
                 password_from_env: false,
@@ -96,6 +97,7 @@ mod tests {
                 reset_state: false,
                 concurrency: 1,
                 quiet: false,
+                ssl_allow_anything: false,
                 output_directory: ".".to_owned(),
             },
         };
